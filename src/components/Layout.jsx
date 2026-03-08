@@ -208,15 +208,19 @@ export default function Layout({ children, hasData }) {
       </div>
 
       {/* ── MAIN CONTENT ────────────────────────────────────── */}
-      <main className="pt-[72px]">
-        <div className="w-full max-w-5xl mx-auto px-4 md:px-8 lg:px-12 py-8 md:py-12">
-          {children}
-        </div>
+      <main className="pt-[64px]">
+        {location.pathname === '/' ? (
+          children
+        ) : (
+          <div className="w-full max-w-screen-xl mx-auto px-4 md:px-8 lg:px-12 py-8 md:py-12">
+            {children}
+          </div>
+        )}
       </main>
 
       {/* ── FOOTER ──────────────────────────────────────────── */}
       <footer className="border-t-4 border-navy bg-white py-6 px-6 no-print">
-        <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="max-w-screen-xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-sm text-slate font-bold text-center sm:text-left">
             OpenPrompt is a free tool by{' '}
             <a

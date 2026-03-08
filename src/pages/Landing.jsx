@@ -1,91 +1,190 @@
+import { useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useEcoData } from '../hooks/useEcoData';
-import UploadZone from '../components/UploadZone';
-import { Zap, Droplets, Cloud } from 'lucide-react';
+import { Upload, FileJson, X, ArrowRight, Lock } from 'lucide-react';
 
 export default function Landing() {
   const { uploadFile, hasData } = useEcoData();
   const navigate = useNavigate();
 
-  const handleUpload = async (file) => {
-    await uploadFile(file);
+  const [dragOver, setDragOver] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [error, setError] = useState(null);
+  const inputRef = useRef(null);
+
+  const handleFile = useCallback((file) => {
+    setError(null);
+    if (!file) return;
+    if (!file.name.endsWith('.json')) { setError('Please upload a .json file'); return; }
+    if (file.size > 500 * 1024 * 1024) { setError('File is too large (max 500 MB)'); return; }
+    setSelectedFile(file);
+  }, []);
+
+  const handleDrop = useCallback((e) => {
+    e.preventDefault();
+    setDragOver(false);
+    handleFile(e.dataTransfer.files[0]);
+  }, [handleFile]);
+
+  const handleSubmit = async () => {
+    if (!selectedFile) return;
+    await uploadFile(selectedFile);
     navigate('/processing');
   };
 
+  const clearFile = () => {
+    setSelectedFile(null);
+    setError(null);
+    if (inputRef.current) inputRef.current.value = '';
+  };
+
   return (
-    <div className="animate-fade-in-up">
-      {/* Hero section */}
-      <div className="flex flex-col md:flex-row gap-0 mb-10 border-4 border-navy overflow-hidden">
-        {/* Left — navy panel */}
-        <div className="bg-navy text-white p-8 md:p-12 md:w-1/2 flex flex-col justify-center">
-          <h1 className="text-4xl md:text-5xl font-black tracking-tight leading-tight mb-4">
-            Know your AI<br />footprint.
+    <div className="landing-root">
+
+      {/* ── HERO ──────────────────────────────────────────────── */}
+      <section className="landing-hero">
+        <div className="landing-hero-content">
+
+          {/* Eyebrow */}
+          <div className="landing-eyebrow">
+            <span className="eyebrow-dot" />
+            AI Environmental Impact Calculator
+          </div>
+
+          {/* Headline */}
+          <h1 className="landing-headline">
+            Every prompt<br />
+            <span className="headline-accent">costs the planet.</span>
           </h1>
-          <p className="text-white/70 text-lg font-bold leading-relaxed">
-            Upload your Claude conversations export and see the energy, water, and carbon impact of your AI usage.
+
+          <p className="landing-subline">
+            Upload your Claude conversation history and discover the real energy,
+            water, and carbon footprint of your AI use.
           </p>
-        </div>
 
-        {/* Right — cream panel */}
-        <div className="bg-cream p-8 md:p-12 md:w-1/2 flex flex-col justify-center">
-          <div className="space-y-4">
-            {[
-              { step: '1', text: 'Export your data from claude.ai (Settings → Export)' },
-              { step: '2', text: 'Upload your conversations.json file below' },
-              { step: '3', text: 'See your environmental impact instantly' },
-            ].map(({ step, text }) => (
-              <div key={step} className="flex items-start gap-4">
-                <div className="w-10 h-10 bg-navy text-white flex items-center justify-center font-black text-lg flex-shrink-0">
-                  {step}
-                </div>
-                <p className="text-ink font-bold text-sm leading-snug pt-2">{text}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Upload zone */}
-      <UploadZone onUpload={handleUpload} />
-
-      {/* Metric preview cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-10">
-        {[
-          { icon: Zap, label: 'Energy (kWh)', color: 'bg-sunshine', desc: 'Electricity consumed by data centers' },
-          { icon: Droplets, label: 'Water (L)', color: 'bg-sky', desc: 'Cooling water for server hardware' },
-          { icon: Cloud, label: 'Carbon (g CO₂)', color: 'bg-green', desc: 'Greenhouse gas emissions produced' },
-        ].map(({ icon: Icon, label, color, desc }) => (
-          <div key={label} className="border-4 border-navy p-5 bg-white animate-fade-in-up">
-            <div className="flex items-center gap-3 mb-2">
-              <div className={`w-8 h-8 ${color} flex items-center justify-center`}>
-                <Icon size={18} className="text-navy" />
-              </div>
-              <span className="font-black text-sm uppercase tracking-wider text-navy">{label}</span>
+          {/* Impact numbers */}
+          <div className="impact-row">
+            <div className="impact-stat">
+              <span className="impact-num" style={{ color: '#FAC206' }}>0.003</span>
+              <span className="impact-label">kWh per message</span>
             </div>
-            <p className="text-slate text-xs font-bold">{desc}</p>
+            <div className="impact-divider" />
+            <div className="impact-stat">
+              <span className="impact-num" style={{ color: '#16C0FF' }}>500ml</span>
+              <span className="impact-label">water per session</span>
+            </div>
+            <div className="impact-divider" />
+            <div className="impact-stat">
+              <span className="impact-num" style={{ color: '#2ECC71' }}>1.5g</span>
+              <span className="impact-label">CO₂ per response</span>
+            </div>
           </div>
-        ))}
-      </div>
 
-      {/* Privacy notice */}
-      <div className="mt-8 p-4 border-2 border-slate/30 bg-white/50">
-        <p className="text-xs text-slate font-bold leading-relaxed">
-          <span className="text-navy font-black uppercase tracking-wider">Privacy:</span>{' '}
-          Your data never leaves your browser. All processing happens locally — nothing is sent to any server.
-          We don't store, transmit, or read your conversations.
-        </p>
-      </div>
-
-      {hasData && (
-        <div className="mt-6 p-4 border-4 border-green bg-green/10">
-          <p className="font-black text-sm text-navy">
-            You already have data loaded.{' '}
-            <button onClick={() => navigate('/dashboard')} className="text-green underline">
-              View your dashboard →
-            </button>
-          </p>
         </div>
+      </section>
+
+      {/* ── UPLOAD CTA ────────────────────────────────────────── */}
+      <section className="landing-upload-section">
+        <div className="landing-upload-inner">
+
+          <div className="upload-heading">
+            <h2>See your actual footprint</h2>
+            <p>Drop your <code>conversations.json</code> from claude.ai — processed entirely in your browser.</p>
+          </div>
+
+          {/* Drop zone */}
+          <div
+            onDrop={handleDrop}
+            onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+            onDragLeave={() => setDragOver(false)}
+            onClick={() => inputRef.current?.click()}
+            className={`drop-zone ${dragOver ? 'drop-zone--active' : ''} ${selectedFile ? 'drop-zone--filled' : ''}`}
+            role="button"
+            tabIndex={0}
+            aria-label="Upload conversations.json"
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') inputRef.current?.click(); }}
+          >
+            <input
+              ref={inputRef}
+              type="file"
+              accept=".json"
+              className="hidden"
+              onChange={(e) => handleFile(e.target.files[0])}
+            />
+
+            {selectedFile ? (
+              <div className="drop-filled">
+                <FileJson size={36} className="drop-icon-filled" />
+                <div>
+                  <p className="drop-filename">{selectedFile.name}</p>
+                  <p className="drop-filesize">{(selectedFile.size / 1024 / 1024).toFixed(2)} MB · ready to analyze</p>
+                </div>
+                <button
+                  onClick={(e) => { e.stopPropagation(); clearFile(); }}
+                  className="drop-clear"
+                  aria-label="Remove file"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            ) : (
+              <div className="drop-empty">
+                <div className={`drop-icon-wrap ${dragOver ? 'drop-icon-wrap--active' : ''}`}>
+                  <Upload size={28} />
+                </div>
+                <div>
+                  <p className="drop-main-text">
+                    {dragOver ? 'Release to upload' : 'Drop conversations.json here'}
+                  </p>
+                  <p className="drop-sub-text">or click to browse · max 500 MB</p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {error && (
+            <div className="upload-error">{error}</div>
+          )}
+
+          {/* Analyze button */}
+          {selectedFile ? (
+            <button onClick={handleSubmit} className="analyze-btn">
+              Analyze My Impact
+              <ArrowRight size={20} />
+            </button>
+          ) : (
+            <div className="how-to-export">
+              <span>Don't have the file?</span>
+              <span className="export-steps">
+                claude.ai → Settings → Export Data → Download conversations.json
+              </span>
+            </div>
+          )}
+
+          {/* Privacy */}
+          <div className="privacy-note">
+            <Lock size={12} />
+            Your data never leaves your device. Zero servers, zero storage.
+          </div>
+
+        </div>
+      </section>
+
+      {/* ── ALREADY HAVE DATA ─────────────────────────────────── */}
+      {hasData && (
+        <section className="landing-has-data">
+          <div className="has-data-inner">
+            <div>
+              <p className="has-data-label">You have data loaded</p>
+              <p className="has-data-sub">Your last analysis is ready to view.</p>
+            </div>
+            <button onClick={() => navigate('/dashboard')} className="has-data-btn">
+              View Dashboard <ArrowRight size={16} />
+            </button>
+          </div>
+        </section>
       )}
+
     </div>
   );
 }
