@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { Upload, BarChart3, List, Lightbulb, BookOpen, Info, X, Menu } from 'lucide-react';
+import { Upload, BarChart3, List, Lightbulb, BookOpen, Info, X, Menu, Leaf } from 'lucide-react';
 
 const navItems = [
   { to: '/',            label: 'Upload',      icon: Upload },
@@ -15,9 +15,6 @@ export default function Layout({ children, hasData }) {
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 });
-  const navRef = useRef(null);
-  const activeItemRef = useRef(null);
 
   // Close mobile menu on route change
   useEffect(() => { setMenuOpen(false); }, [location.pathname]);
@@ -35,26 +32,10 @@ export default function Layout({ children, hasData }) {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  // Slide the green active indicator under the correct nav item
-  useEffect(() => {
-    const updateIndicator = () => {
-      if (!navRef.current || !activeItemRef.current) return;
-      const navRect = navRef.current.getBoundingClientRect();
-      const itemRect = activeItemRef.current.getBoundingClientRect();
-      setIndicatorStyle({
-        left: itemRect.left - navRect.left,
-        width: itemRect.width,
-      });
-    };
-    updateIndicator();
-    window.addEventListener('resize', updateIndicator);
-    return () => window.removeEventListener('resize', updateIndicator);
-  }, [location.pathname]);
-
   return (
     <div className="min-h-screen bg-cream">
 
-      {/* ── FLOATING TOP NAVBAR ──────────────────────────────── */}
+      {/* ── TOP NAVBAR ───────────────────────────────────────── */}
       <header
         className={`fixed top-0 left-0 right-0 z-50 no-print transition-all duration-300 ${
           scrolled ? 'navbar-scrolled' : ''
@@ -67,8 +48,8 @@ export default function Layout({ children, hasData }) {
             aria-label="OpenPrompt Home"
             className="logo-link flex items-center gap-2.5 flex-shrink-0"
           >
-            <div className="logo-box">
-              <span className="logo-letter">O</span>
+            <div className="logo-icon-wrap">
+              <Leaf size={18} strokeWidth={2.5} />
             </div>
             <div className="logo-text-group">
               <span className="logo-name">OpenPrompt</span>
@@ -78,9 +59,8 @@ export default function Layout({ children, hasData }) {
 
           {/* Desktop Nav */}
           <nav
-            ref={navRef}
             aria-label="Main navigation"
-            className="hidden md:flex items-center relative self-stretch"
+            className="hidden md:flex items-center gap-1"
           >
             {navItems.map((item) => {
               const isActive =
@@ -91,24 +71,15 @@ export default function Layout({ children, hasData }) {
                 <NavLink
                   key={item.to}
                   to={item.to}
-                  ref={isActive ? activeItemRef : null}
                   end={item.to === '/'}
                   className={`nav-item ${isActive ? 'nav-item--active' : ''}`}
                   aria-current={isActive ? 'page' : undefined}
                 >
-                  <item.icon size={14} />
+                  <item.icon size={13} />
                   {item.label}
                 </NavLink>
               );
             })}
-            {/* Sliding indicator */}
-            <span
-              className="nav-indicator"
-              style={{
-                transform: `translateX(${indicatorStyle.left}px)`,
-                width: indicatorStyle.width,
-              }}
-            />
           </nav>
 
           {/* Right: data badge + hamburger */}
@@ -127,7 +98,7 @@ export default function Layout({ children, hasData }) {
               aria-label="Open menu"
               aria-expanded={menuOpen}
             >
-              <Menu size={22} />
+              <Menu size={20} />
             </button>
           </div>
         </div>
@@ -146,8 +117,8 @@ export default function Layout({ children, hasData }) {
           {/* Drawer header */}
           <div className="mobile-drawer-header">
             <div className="flex items-center gap-2.5">
-              <div className="logo-box logo-box--sm">
-                <span className="logo-letter logo-letter--sm">O</span>
+              <div className="logo-icon-wrap" style={{ width: 32, height: 32, borderRadius: 8 }}>
+                <Leaf size={14} strokeWidth={2.5} />
               </div>
               <span className="logo-name">OpenPrompt</span>
             </div>
@@ -156,7 +127,7 @@ export default function Layout({ children, hasData }) {
               className="close-btn"
               aria-label="Close menu"
             >
-              <X size={22} />
+              <X size={18} />
             </button>
           </div>
 
@@ -182,7 +153,7 @@ export default function Layout({ children, hasData }) {
                   className={`mobile-nav-item ${isActive ? 'mobile-nav-item--active' : ''}`}
                   style={{ animationDelay: menuOpen ? `${i * 60}ms` : '0ms' }}
                 >
-                  <item.icon size={20} />
+                  <item.icon size={18} />
                   {item.label}
                   {isActive && <span className="mobile-active-dot" />}
                 </NavLink>
@@ -208,7 +179,7 @@ export default function Layout({ children, hasData }) {
       </div>
 
       {/* ── MAIN CONTENT ────────────────────────────────────── */}
-      <main className="pt-[64px]">
+      <main className="pt-[72px]">
         {location.pathname === '/' ? (
           children
         ) : (
@@ -219,23 +190,23 @@ export default function Layout({ children, hasData }) {
       </main>
 
       {/* ── FOOTER ──────────────────────────────────────────── */}
-      <footer className="border-t-4 border-navy bg-white py-6 px-6 no-print">
+      <footer className="border-t border-navy/10 bg-white/60 py-6 px-6 no-print">
         <div className="max-w-screen-xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-sm text-slate font-bold text-center sm:text-left">
+          <p className="text-sm text-slate font-medium text-center sm:text-left">
             OpenPrompt is a free tool by{' '}
             <a
               href="https://www.techawarenessassociation.org"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-green underline font-black"
+              className="text-green font-bold underline underline-offset-2"
             >
               Tech Awareness Association
             </a>
             , a student-founded nonprofit in Shrewsbury, MA.
           </p>
-          <div className="flex items-center gap-4 text-xs font-black uppercase tracking-wider flex-shrink-0">
-            <NavLink to="/methodology" className="text-navy hover:text-green transition-colors">Methodology</NavLink>
-            <NavLink to="/about" className="text-navy hover:text-green transition-colors">About</NavLink>
+          <div className="flex items-center gap-5 text-xs font-bold uppercase tracking-wider flex-shrink-0">
+            <NavLink to="/methodology" className="text-navy/60 hover:text-green transition-colors">Methodology</NavLink>
+            <NavLink to="/about" className="text-navy/60 hover:text-green transition-colors">About</NavLink>
           </div>
         </div>
       </footer>

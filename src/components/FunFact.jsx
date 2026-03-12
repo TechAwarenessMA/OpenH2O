@@ -7,24 +7,36 @@ export default function FunFact({ totals, conversations }) {
   const facts = [
     {
       emoji: '📊',
-      text: `Your average conversation uses ${formatNumber(avgTokens, 0)} tokens`,
+      label: 'Average conversation',
+      value: `${formatNumber(avgTokens, 0)} tokens`,
     },
     longestConvo && {
       emoji: '🏆',
-      text: `Your longest conversation ("${longestConvo.title?.slice(0, 30) || 'Untitled'}") used ${formatNumber(longestConvo.totalTokens)} tokens`,
+      label: 'Longest conversation',
+      value: `${formatNumber(longestConvo.totalTokens)} tokens`,
+      sub: `"${longestConvo.title?.slice(0, 28) || 'Untitled'}"`,
     },
     totals.totalConversations > 10 && {
       emoji: '💬',
-      text: `You've had ${formatNumber(totals.totalConversations)} conversations with AI`,
+      label: 'Total AI conversations',
+      value: formatNumber(totals.totalConversations),
     },
   ].filter(Boolean);
 
   return (
     <>
       {facts.map((fact, i) => (
-        <div key={i} className="border-4 border-sunshine bg-sunshine/10 p-4 flex items-start gap-3 animate-fade-in-up">
-          <span className="text-2xl">{fact.emoji}</span>
-          <p className="text-sm font-bold text-navy">{fact.text}</p>
+        <div
+          key={i}
+          className="flex items-start gap-3.5 p-4 rounded-xl bg-white border border-sunshine/25 shadow-sm animate-fade-in-up"
+          style={{ boxShadow: '0 2px 12px rgba(245,183,0,0.08)' }}
+        >
+          <span className="text-2xl leading-none mt-0.5 flex-shrink-0">{fact.emoji}</span>
+          <div>
+            <p className="text-xs font-bold text-slate uppercase tracking-wider mb-0.5">{fact.label}</p>
+            <p className="text-base font-black text-navy leading-tight">{fact.value}</p>
+            {fact.sub && <p className="text-xs text-slate font-medium mt-0.5 truncate">{fact.sub}</p>}
+          </div>
         </div>
       ))}
     </>
