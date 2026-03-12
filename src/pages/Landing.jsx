@@ -39,11 +39,11 @@ export default function Landing() {
   };
 
   return (
-    <div className="landing-root">
+    <div className="landing-split">
 
-      {/* ── HERO ──────────────────────────────────────────────── */}
-      <section className="landing-hero">
-        <div className="landing-hero-content">
+      {/* ── LEFT: HERO ─────────────────────────────────────── */}
+      <section className="landing-left">
+        <div className="landing-left-content">
 
           {/* Eyebrow */}
           <div className="landing-eyebrow">
@@ -83,9 +83,9 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* ── UPLOAD CTA ────────────────────────────────────────── */}
-      <section className="landing-upload-section">
-        <div className="landing-upload-inner">
+      {/* ── RIGHT: UPLOAD ──────────────────────────────────── */}
+      <section className="landing-right">
+        <div className="landing-right-content">
 
           <div className="upload-heading">
             <h2>See your actual footprint</h2>
@@ -114,7 +114,7 @@ export default function Landing() {
 
             {selectedFile ? (
               <div className="drop-filled">
-                <FileJson size={36} className="drop-icon-filled" />
+                <FileJson size={34} className="drop-icon-filled" />
                 <div>
                   <p className="drop-filename">{selectedFile.name}</p>
                   <p className="drop-filesize">{(selectedFile.size / 1024 / 1024).toFixed(2)} MB · ready to analyze</p>
@@ -130,7 +130,7 @@ export default function Landing() {
             ) : (
               <div className="drop-empty">
                 <div className={`drop-icon-wrap ${dragOver ? 'drop-icon-wrap--active' : ''}`}>
-                  <Upload size={28} />
+                  <Upload size={26} />
                 </div>
                 <div>
                   <p className="drop-main-text">
@@ -167,23 +167,21 @@ export default function Landing() {
             Your data never leaves your device. Zero servers, zero storage.
           </div>
 
+          {/* Already have data */}
+          {hasData && (
+            <div className="has-data-panel">
+              <div>
+                <p className="has-data-label">Data loaded</p>
+                <p className="has-data-sub">Your last analysis is ready.</p>
+              </div>
+              <button onClick={() => navigate('/dashboard')} className="has-data-btn">
+                View Dashboard <ArrowRight size={14} />
+              </button>
+            </div>
+          )}
+
         </div>
       </section>
-
-      {/* ── ALREADY HAVE DATA ─────────────────────────────────── */}
-      {hasData && (
-        <section className="landing-has-data">
-          <div className="has-data-inner">
-            <div>
-              <p className="has-data-label">You have data loaded</p>
-              <p className="has-data-sub">Your last analysis is ready to view.</p>
-            </div>
-            <button onClick={() => navigate('/dashboard')} className="has-data-btn">
-              View Dashboard <ArrowRight size={16} />
-            </button>
-          </div>
-        </section>
-      )}
 
     </div>
   );
