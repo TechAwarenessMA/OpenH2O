@@ -27,7 +27,7 @@ function calcImpact(inputTokens, outputTokens) {
   const energyKwh = totalEnergyWh / 1000;
 
   // Step 4: Water & Carbon
-  const waterLiters = energyKwh * COEFFICIENTS.water_per_kwh_liters;
+  const waterLiters = energyKwh * (COEFFICIENTS.direct_water_per_kwh_liters + COEFFICIENTS.indirect_water_per_kwh_liters);
   const carbonGrams = energyKwh * COEFFICIENTS.carbon_per_kwh_gco2e;
 
   return { energyKwh, waterLiters, carbonGrams };

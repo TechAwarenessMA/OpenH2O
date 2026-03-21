@@ -11,7 +11,7 @@
  */
 export const COEFFICIENTS = {
   /** Semantic version — increment by 0.1 whenever any value changes */
-  version: '1.0',
+  version: '1.1',
 
   /** Date these coefficients were last reviewed against published literature */
   lastUpdated: 'March 2026',
@@ -21,14 +21,14 @@ export const COEFFICIENTS = {
    * Output tokens cost ~3-5x more than input (autoregressive generation).
    * Source: Luccioni et al. 2023, "Power Hungry Processing"
    */
-  energy_per_output_token_wh: 0.000003,
+  energy_per_output_token_wh: 0.000195,
 
   /**
    * Energy (Wh) consumed per INPUT token during inference.
    * Input pass is a single forward pass — significantly cheaper than output.
    * Source: Luccioni et al. 2023
    */
-  energy_per_input_token_wh: 0.000001,
+  energy_per_input_token_wh: 0.0000039,
 
   /**
    * Power Usage Effectiveness — ratio of total data center energy
@@ -43,14 +43,16 @@ export const COEFFICIENTS = {
    * Includes direct cooling water evaporation.
    * Source: EESI 2024 — 1,900 L/MWh direct cooling, converted to per-kWh
    */
-  water_per_kwh_liters: 1.9,
+  direct_water_per_kwh_liters: 1.9,
+
+  indirect_water_per_kwh_liters: 4.5,
 
   /**
    * Grams of CO₂e emitted per kWh of electricity.
    * US average grid carbon intensity. Anthropic uses US East region.
    * Source: EPA eGRID 2023
    */
-  carbon_per_kwh_gco2e: 350,
+  carbon_per_kwh_gco2e: 340,
 
   /**
    * Default model label — Claude export does not include per-message model data.
@@ -66,9 +68,9 @@ export const COEFFICIENTS = {
 
   /** Source citations */
   sources: {
-    energy: 'Luccioni et al. 2023, "Power Hungry Processing"',
+    energy: ['Luccioni et al. 2023, "Power Hungry Processing"', '2024 United States Data Center Energy Usage Report'],
     pue: 'Anthropic datacenter estimate; industry avg 1.1–1.5',
-    water: 'EESI 2024, direct cooling: 1,900 L/MWh',
-    carbon: 'EPA eGRID 2023, US national average',
+    water: ['EESI 2024, direct cooling: 1,900 L/MWh', '2024 United States Data Center Energy Usage Report'],
+    carbon: ['EPA eGRID 2023, US national average', '2024 United States Data Center Energy Usage Report']
   },
 };
