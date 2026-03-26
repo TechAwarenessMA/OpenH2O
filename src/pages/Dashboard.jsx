@@ -107,7 +107,7 @@ function TokenPanel({ inputTokens, outputTokens }) {
         </div>
         <div className="p-5 bg-cream border-4 border-navy/10">
           <p className="text-xs font-black text-slate uppercase tracking-wider mb-2">
-            Claude's Replies (Output)
+            AI Replies (Output)
           </p>
           <p className="text-3xl font-black text-navy">{formatNumber(outputTokens)}</p>
           <p className="text-xs font-bold text-slate mt-1">
@@ -294,7 +294,7 @@ function ContextGrid({ comparisons }) {
 
 /* ── Dashboard ─────────────────────────────────────────────── */
 export default function Dashboard() {
-  const { hasData, totals, monthlyData, dateRange } = useEcoData();
+  const { hasData, totals, monthlyData, dateRange, sources } = useEcoData();
   const navigate = useNavigate();
 
   if (!hasData) {
@@ -360,7 +360,7 @@ export default function Dashboard() {
           </span>
         </div>
         <p className="text-xs font-bold text-slate/60 mt-3">
-          Calculated using {COEFFICIENTS.model_label} coefficients ·{' '}
+          Calculated using {sources.map(s => s === 'claude' ? 'Claude Sonnet 4.6' : 'GPT-5').join(' + ')} coefficients ·{' '}
           estimates ±{COEFFICIENTS.uncertainty_range_pct}% ·{' '}
           <button
             onClick={() => navigate('/methodology')}

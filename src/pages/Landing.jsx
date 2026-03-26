@@ -4,7 +4,7 @@ import { useEcoData } from '../hooks/useEcoData';
 import { Upload, FileJson, X, ArrowRight, Lock } from 'lucide-react';
 
 export default function Landing() {
-  const { uploadFile, hasData } = useEcoData();
+  const { uploadFile, hasData, sources } = useEcoData();
   const navigate = useNavigate();
 
   const [dragOver, setDragOver] = useState(false);
@@ -15,7 +15,10 @@ export default function Landing() {
   const handleFile = useCallback((file) => {
     setError(null);
     if (!file) return;
-    if (!file.name.endsWith('.json')) { setError('Please upload a .json file'); return; }
+    if (!file.name.endsWith('.json') && !file.name.endsWith('.zip')) {
+      setError('Please upload a .json or .zip file');
+      return;
+    }
     if (file.size > 500 * 1024 * 1024) { setError('File is too large (max 500 MB)'); return; }
     setSelectedFile(file);
   }, []);
@@ -58,8 +61,8 @@ export default function Landing() {
           </h1>
 
           <p className="landing-subline">
-            Upload your Claude conversation history and discover the real energy,
-            water, and carbon footprint of your AI use.
+            Upload your AI conversation history from Claude or ChatGPT and discover
+            the real energy, water, and carbon footprint of your AI use.
           </p>
 
           {/* Impact numbers */}
@@ -89,7 +92,7 @@ export default function Landing() {
 
           <div className="upload-heading">
             <h2>See your actual footprint</h2>
-            <p>Drop your <code>conversations.json</code> from claude.ai — processed entirely in your browser.</p>
+            <p>Drop your <code>conversations.json</code> from Claude or ChatGPT — processed entirely in your browser.</p>
           </div>
 
           {/* Drop zone */}
@@ -107,7 +110,7 @@ export default function Landing() {
             <input
               ref={inputRef}
               type="file"
-              accept=".json"
+              accept=".json,.zip"
               className="hidden"
               onChange={(e) => handleFile(e.target.files[0])}
             />
@@ -134,9 +137,9 @@ export default function Landing() {
                 </div>
                 <div>
                   <p className="drop-main-text">
-                    {dragOver ? 'Release to upload' : 'Drop conversations.json here'}
+                    {dragOver ? 'Release to upload' : 'Drop conversations.json or .zip here'}
                   </p>
-                  <p className="drop-sub-text">or click to browse · max 500 MB</p>
+                  <p className="drop-sub-text">or click to browse · .json or .zip · max 500 MB</p>
                 </div>
               </div>
             )}
@@ -156,7 +159,8 @@ export default function Landing() {
             <div className="how-to-export">
               <span>Don't have the file?</span>
               <span className="export-steps">
-                claude.ai → Settings → Export Data → Download conversations.json
+                <strong>Claude:</strong> claude.ai → Settings → Export Data<br />
+                <strong>ChatGPT:</strong> chatgpt.com → Settings → Data Controls → Export
               </span>
             </div>
           )}
@@ -171,8 +175,14 @@ export default function Landing() {
           {hasData && (
             <div className="has-data-panel">
               <div>
-                <p className="has-data-label">Data loaded</p>
-                <p className="has-data-sub">Your last analysis is ready.</p>
+                <p className="has-data-label">
+                  {sources.map(s => s === 'claude' ? 'Claude' : 'ChatGPT').join(' + ')} loaded
+                </p>
+                <p className="has-data-sub">
+                  {sources.length === 1
+                    ? `Upload ${sources[0] === 'claude' ? 'ChatGPT' : 'Claude'} data too, or view your results.`
+                    : 'Both sources combined. View your results.'}
+                </p>
               </div>
               <button onClick={() => navigate('/dashboard')} className="has-data-btn">
                 View Dashboard <ArrowRight size={14} />

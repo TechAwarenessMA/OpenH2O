@@ -7,10 +7,26 @@ import ConvoDetailPanel from '../components/ConvoDetailPanel';
 /** Match a processed conversation back to its raw data by title + date */
 function findRawConvo(rawData, convo) {
   if (!rawData) return null;
-  const convos = Array.isArray(rawData)
-    ? rawData
-    : rawData.conversations || rawData.chat_messages || Object.values(rawData);
+
+  // rawData is now { claude: json, chatgpt: json }
+  const sourceJson = convo.source ? rawData[convo.source] : null;
+  if (!sourceJson) return null;
+
+  const convos = Array.isArray(sourceJson)
+    ? sourceJson
+    : sourceJson.conversations || sourceJson.chat_messages || Object.values(sourceJson);
   if (!Array.isArray(convos)) return null;
+
+  if (convo.source === 'chatgpt') {
+    // ChatGPT: match by title (create_time is a Unix float, createdAt is ISO)
+    return convos.find(raw => {
+      const rawTitle = raw.title || '';
+      const rawDate = raw.create_time ? new Date(raw.create_time * 1000).toISOString() : '';
+      return rawTitle === convo.title && rawDate === convo.createdAt;
+    }) || null;
+  }
+
+  // Claude
   return convos.find(raw => {
     const rawTitle = raw.name || raw.title || '';
     const rawDate = raw.created_at || raw.create_time || '';

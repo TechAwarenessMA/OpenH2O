@@ -33,7 +33,7 @@ export default function About() {
         <h2 className="text-lg font-black text-navy uppercase tracking-wider mb-4">What OpenH2O Does</h2>
         <ul className="space-y-3 text-sm text-ink font-bold">
           {[
-            'Estimates the energy, water, and carbon footprint of your Claude AI conversations',
+            'Estimates the energy, water, and carbon footprint of your Claude and ChatGPT conversations',
             'Processes everything locally in your browser — your data never leaves your device',
             'Provides real-world comparisons to contextualize your impact',
             'Offers actionable tips for reducing your AI environmental footprint',

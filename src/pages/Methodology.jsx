@@ -1,4 +1,5 @@
 import { COEFFICIENTS } from '../data/coefficients';
+import { GPT_COEFFICIENTS } from '../data/gptCoefficients';
 import { BookOpen, AlertTriangle } from 'lucide-react';
 
 /** Render a source value — handles both strings and arrays */
@@ -14,6 +15,46 @@ function Source({ value }) {
   return <>{value}</>;
 }
 
+/** Reusable coefficients table */
+function CoefficientsTable({ label, coeff, accentColor }) {
+  return (
+    <div>
+      <p className="text-sm font-black text-navy mb-3 flex items-center gap-2">
+        <span className="inline-block w-3 h-3 border-2 border-navy" style={{ background: accentColor }} />
+        {label}
+        <span className="text-xs font-bold text-slate">(v{coeff.version})</span>
+      </p>
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b-4 border-navy">
+              <th className="text-left py-3 px-2 font-black text-navy uppercase tracking-wider text-xs">Parameter</th>
+              <th className="text-left py-3 px-2 font-black text-navy uppercase tracking-wider text-xs">Value</th>
+              <th className="text-left py-3 px-2 font-black text-navy uppercase tracking-wider text-xs">Source</th>
+            </tr>
+          </thead>
+          <tbody>
+            {[
+              { param: 'Energy per input token', value: `${coeff.energy_per_input_token_wh} Wh`, source: coeff.sources.energy },
+              { param: 'Energy per output token', value: `${coeff.energy_per_output_token_wh} Wh`, source: coeff.sources.energy },
+              { param: 'PUE (Power Usage Effectiveness)', value: coeff.pue_multiplier, source: coeff.sources.pue },
+              { param: 'Direct water per kWh', value: `${coeff.direct_water_per_kwh_liters} L`, source: coeff.sources.water },
+              { param: 'Indirect water per kWh', value: `${coeff.indirect_water_per_kwh_liters} L`, source: coeff.sources.water },
+              { param: 'Carbon per kWh', value: `${coeff.carbon_per_kwh_gco2e} g CO₂e`, source: coeff.sources.carbon },
+            ].map(({ param, value, source }) => (
+              <tr key={param} className="border-b-2 border-navy/10">
+                <td className="py-3 px-2 font-bold text-ink">{param}</td>
+                <td className="py-3 px-2 font-black text-navy">{value}</td>
+                <td className="py-3 px-2 text-xs text-slate font-bold"><Source value={source} /></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
 export default function Methodology() {
   const totalWater = COEFFICIENTS.direct_water_per_kwh_liters + COEFFICIENTS.indirect_water_per_kwh_liters;
 
@@ -23,7 +64,7 @@ export default function Methodology() {
         <h1 className="text-3xl md:text-4xl font-black text-navy tracking-tight uppercase">Methodology</h1>
         <p className="text-slate font-bold mt-1">How we calculate your AI environmental impact</p>
         <p className="text-xs font-bold text-slate/60 mt-2">
-          Coefficients v{COEFFICIENTS.version} · Last updated {COEFFICIENTS.lastUpdated} · Model: {COEFFICIENTS.model_label}
+          Claude coefficients v{COEFFICIENTS.version} · GPT coefficients v{GPT_COEFFICIENTS.version} · Last updated {COEFFICIENTS.lastUpdated}
         </p>
       </div>
 
@@ -42,6 +83,20 @@ export default function Methodology() {
             We aim for reasonable approximations, not precise measurements.
           </p>
         </div>
+      </div>
+
+      {/* Multi-model note */}
+      <div
+        className="border-4 border-sky bg-sky/10 p-5"
+        style={{ boxShadow: '4px 4px 0px 0px #16C0FF' }}
+      >
+        <p className="font-black text-sm text-navy mb-1">Multi-Provider Support</p>
+        <p className="text-xs text-ink font-bold leading-relaxed">
+          OpenH2O supports both Claude and ChatGPT conversation exports. Each provider uses model-specific
+          energy coefficients — GPT-5 consumes significantly more energy per token than Claude Sonnet 4.6 due to
+          its larger model size. Infrastructure values (PUE, water, carbon grid intensity) are shared since they
+          depend on data center, not model architecture.
+        </p>
       </div>
 
       {/* Formula walkthrough */}
@@ -66,8 +121,8 @@ export default function Methodology() {
             {
               step: '2',
               title: 'Raw Energy (Wh)',
-              desc: `Input tokens use ${COEFFICIENTS.energy_per_input_token_wh} Wh each (single forward pass). Output tokens use ${COEFFICIENTS.energy_per_output_token_wh} Wh each (autoregressive generation, ~50× more expensive).`,
-              formula: `rawEnergy_wh = (inputTokens × ${COEFFICIENTS.energy_per_input_token_wh})\n             + (outputTokens × ${COEFFICIENTS.energy_per_output_token_wh})`,
+              desc: `Energy per token depends on the model. Claude: input=${COEFFICIENTS.energy_per_input_token_wh} Wh, output=${COEFFICIENTS.energy_per_output_token_wh} Wh. GPT-5: input=${GPT_COEFFICIENTS.energy_per_input_token_wh} Wh, output=${GPT_COEFFICIENTS.energy_per_output_token_wh} Wh.`,
+              formula: `rawEnergy_wh = (inputTokens × energy_per_input)\n             + (outputTokens × energy_per_output)`,
             },
             {
               step: '3',
@@ -100,39 +155,14 @@ export default function Methodology() {
         </div>
       </div>
 
-      {/* Coefficients table */}
+      {/* Coefficients tables — Claude + GPT */}
       <div
-        className="border-4 border-navy bg-white p-6"
+        className="border-4 border-navy bg-white p-6 space-y-8"
         style={{ boxShadow: '4px 4px 0px 0px #2C3E50' }}
       >
-        <h2 className="text-lg font-black text-navy uppercase tracking-wider mb-4">Coefficients Used</h2>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b-4 border-navy">
-                <th className="text-left py-3 px-2 font-black text-navy uppercase tracking-wider text-xs">Parameter</th>
-                <th className="text-left py-3 px-2 font-black text-navy uppercase tracking-wider text-xs">Value</th>
-                <th className="text-left py-3 px-2 font-black text-navy uppercase tracking-wider text-xs">Source</th>
-              </tr>
-            </thead>
-            <tbody>
-              {[
-                { param: 'Energy per input token', value: `${COEFFICIENTS.energy_per_input_token_wh} Wh`, source: COEFFICIENTS.sources.energy },
-                { param: 'Energy per output token', value: `${COEFFICIENTS.energy_per_output_token_wh} Wh`, source: COEFFICIENTS.sources.energy },
-                { param: 'PUE (Power Usage Effectiveness)', value: COEFFICIENTS.pue_multiplier, source: COEFFICIENTS.sources.pue },
-                { param: 'Direct water per kWh', value: `${COEFFICIENTS.direct_water_per_kwh_liters} L`, source: COEFFICIENTS.sources.water },
-                { param: 'Indirect water per kWh', value: `${COEFFICIENTS.indirect_water_per_kwh_liters} L`, source: COEFFICIENTS.sources.water },
-                { param: 'Carbon per kWh', value: `${COEFFICIENTS.carbon_per_kwh_gco2e} g CO₂e`, source: COEFFICIENTS.sources.carbon },
-              ].map(({ param, value, source }) => (
-                <tr key={param} className="border-b-2 border-navy/10">
-                  <td className="py-3 px-2 font-bold text-ink">{param}</td>
-                  <td className="py-3 px-2 font-black text-navy">{value}</td>
-                  <td className="py-3 px-2 text-xs text-slate font-bold"><Source value={source} /></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <h2 className="text-lg font-black text-navy uppercase tracking-wider">Coefficients Used</h2>
+        <CoefficientsTable label="Claude Sonnet 4.6" coeff={COEFFICIENTS} accentColor="#d97706" />
+        <CoefficientsTable label="GPT-5" coeff={GPT_COEFFICIENTS} accentColor="#10a37f" />
       </div>
 
       {/* Real-world comparisons table */}
@@ -178,12 +208,13 @@ export default function Methodology() {
         <h2 className="text-lg font-black text-navy uppercase tracking-wider mb-4">Sources of Uncertainty</h2>
         <ul className="space-y-2 text-sm text-ink font-bold">
           {[
-            'Token count is approximate — we use a GPT-4 compatible tokenizer (within ~5%), but Claude uses its own proprietary tokenizer.',
+            'Token count is approximate — we use a GPT-4 compatible tokenizer (within ~5%), but Claude and GPT-5 use their own proprietary tokenizers.',
             'Energy per token varies significantly by model size, hardware generation, and batch utilization.',
             `PUE varies by data center — hyperscalers report ~1.1–1.2, industry average is ~1.5. We use ${COEFFICIENTS.pue_multiplier}.`,
             `Grid carbon intensity varies dramatically by region (50–900+ g CO₂/kWh). We use ${COEFFICIENTS.carbon_per_kwh_gco2e} g (US average).`,
             'Water usage depends on cooling method (evaporative vs. air-cooled) and local climate conditions.',
             'We do not account for embodied carbon in hardware manufacturing or model training energy.',
+            `GPT-5 energy estimates are based on early research (Epoch AI, U. of Rhode Island) and may be revised as more data becomes available.`,
             `All estimates carry ±${COEFFICIENTS.uncertainty_range_pct}% uncertainty.`,
           ].map((item, i) => (
             <li key={i} className="flex items-start gap-2">
@@ -208,6 +239,8 @@ export default function Methodology() {
             { text: 'US EPA — eGRID (Grid Carbon Intensity)', url: 'https://www.epa.gov/egrid' },
             { text: 'Uptime Institute — Global PUE Survey', url: 'https://uptimeinstitute.com/resources/research-and-reports/uptime-institute-global-data-center-survey-results-2023' },
             { text: 'IEA — Data Centres and Data Transmission Networks', url: 'https://www.iea.org/energy-system/buildings/data-centres-and-data-transmission-networks' },
+            { text: 'Epoch AI — How much energy does ChatGPT use? (2025)', url: 'https://epoch.ai/gradient-updates/how-much-energy-does-chatgpt-use' },
+            { text: "Tom's Hardware — GPT-5 Power Consumption Estimates (2025)", url: 'https://www.tomshardware.com/tech-industry/artificial-intelligence/chatgpt-5-power-consumption-could-be-as-much-as-eight-times-higher-than-gpt-4-research-institute-estimates-medium-sized-gpt-5-response-can-consume-up-to-40-watt-hours-of-electricity' },
           ].map(({ text, url }) => (
             <li key={url}>
               <a href={url} target="_blank" rel="noopener noreferrer" className="text-green hover:text-navy underline transition-colors">

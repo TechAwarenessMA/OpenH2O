@@ -1,9 +1,11 @@
 import { useMemo, useState } from 'react';
 import { X, Zap, Droplets, Cloud, MessageSquare, ChevronDown, ChevronUp, AlertTriangle, Info, CheckCircle } from 'lucide-react';
 import { COEFFICIENTS } from '../data/coefficients';
+import { GPT_COEFFICIENTS } from '../data/gptCoefficients';
 import { countTokens, extractText } from '../utils/tokenizer';
 import { calculatePromptScore } from '../utils/promptScorer';
 import { formatNumber, formatDate } from '../utils/formatters';
+import { flattenChatGPTMessages } from '../utils/chatgptParser';
 
 /** Extract text from a message object */
 function getTextFromMsg(msg) {
@@ -16,16 +18,17 @@ function getTextFromMsg(msg) {
 }
 
 /** Compute per-message stats on demand */
-function computeMessageStats(chatMessages) {
+function computeMessageStats(chatMessages, source) {
+  const coeff = source === 'chatgpt' ? GPT_COEFFICIENTS : COEFFICIENTS;
   return chatMessages.map(msg => {
     const text = getTextFromMsg(msg);
     const tokens = countTokens(text);
     const sender = msg.sender || msg.role || 'unknown';
     const isInput = sender === 'human' || sender === 'user';
     const energyWh = (isInput
-      ? tokens * COEFFICIENTS.energy_per_input_token_wh
-      : tokens * COEFFICIENTS.energy_per_output_token_wh
-    ) * COEFFICIENTS.pue_multiplier;
+      ? tokens * coeff.energy_per_input_token_wh
+      : tokens * coeff.energy_per_output_token_wh
+    ) * coeff.pue_multiplier;
 
     return { sender, text, tokens, energyWh, isInput };
   });
@@ -79,11 +82,16 @@ function severityBorder(severity) {
 export default function ConvoDetailPanel({ convo, rawConvo, onClose }) {
   const [showMessages, setShowMessages] = useState(false);
 
-  const chatMessages = rawConvo.chat_messages || rawConvo.messages || [];
+  const chatMessages = useMemo(() => {
+    if (convo.source === 'chatgpt' && rawConvo.mapping) {
+      return flattenChatGPTMessages(rawConvo.mapping);
+    }
+    return rawConvo.chat_messages || rawConvo.messages || [];
+  }, [rawConvo, convo.source]);
 
   const messageStats = useMemo(
-    () => computeMessageStats(chatMessages),
-    [chatMessages]
+    () => computeMessageStats(chatMessages, convo.source),
+    [chatMessages, convo.source]
   );
 
   const promptScore = useMemo(
@@ -111,6 +119,9 @@ export default function ConvoDetailPanel({ convo, rawConvo, onClose }) {
             {convo.title || 'Untitled'}
           </h3>
           <p className="text-xs font-bold text-slate mt-0.5">
+            <span className={`inline-block px-1.5 py-0.5 text-white font-black text-[10px] uppercase mr-1.5 ${convo.source === 'chatgpt' ? 'bg-[#10a37f]' : 'bg-[#d97706]'}`}>
+              {convo.source === 'chatgpt' ? 'GPT' : 'Claude'}
+            </span>
             {formatDate(convo.createdAt)} · {convo.messageCount} messages
           </p>
         </div>
@@ -224,7 +235,7 @@ export default function ConvoDetailPanel({ convo, rawConvo, onClose }) {
               {messageStats.map((m, i) => (
                 <div key={i} className="flex items-start gap-2 p-2 text-xs">
                   <span className={`font-black flex-shrink-0 w-14 ${m.isInput ? 'text-sky' : 'text-coral'}`}>
-                    {m.isInput ? 'You' : 'Claude'}
+                    {m.isInput ? 'You' : (convo.source === 'chatgpt' ? 'GPT' : 'Claude')}
                   </span>
                   <p className="text-slate font-bold flex-1 min-w-0 truncate" title={m.text}>
                     {m.text.slice(0, 80)}{m.text.length > 80 ? '...' : ''}

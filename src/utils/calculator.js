@@ -1,73 +1,57 @@
 import { COEFFICIENTS } from '../data/coefficients';
+import { GPT_COEFFICIENTS } from '../data/gptCoefficients';
 import { countTokens, extractText } from './tokenizer';
+import { isChatGPTFormat, normalizeChatGPTConversation } from './chatgptParser';
 
 /**
  * Calculate environmental impact from input and output token counts.
  *
- * Formula (from spec Section 3.4):
- *   rawEnergy_wh  = (inputTokens × energy_per_input_token_wh)
- *                  + (outputTokens × energy_per_output_token_wh)
- *   totalEnergy_wh  = rawEnergy_wh × pue_multiplier
- *   totalEnergy_kwh = totalEnergy_wh / 1000
- *   water_liters    = totalEnergy_kwh × water_per_kwh_liters
- *   carbon_gco2e    = totalEnergy_kwh × carbon_per_kwh_gco2e
- *
- * @param {number} inputTokens  - Tokens from sender === 'human'
- * @param {number} outputTokens - Tokens from sender === 'assistant'
+ * @param {number} inputTokens
+ * @param {number} outputTokens
+ * @param {Object} coeff - Coefficients object (COEFFICIENTS or GPT_COEFFICIENTS)
  * @returns {{ energyKwh: number, waterLiters: number, carbonGrams: number }}
  */
-function calcImpact(inputTokens, outputTokens) {
-  // Step 2: Raw energy (Wh)
+function calcImpact(inputTokens, outputTokens, coeff) {
   const rawEnergyWh =
-    (inputTokens * COEFFICIENTS.energy_per_input_token_wh) +
-    (outputTokens * COEFFICIENTS.energy_per_output_token_wh);
+    (inputTokens * coeff.energy_per_input_token_wh) +
+    (outputTokens * coeff.energy_per_output_token_wh);
 
-  // Step 3: Apply PUE and convert to kWh
-  const totalEnergyWh = rawEnergyWh * COEFFICIENTS.pue_multiplier;
+  const totalEnergyWh = rawEnergyWh * coeff.pue_multiplier;
   const energyKwh = totalEnergyWh / 1000;
 
-  // Step 4: Water & Carbon
-  const waterLiters = energyKwh * (COEFFICIENTS.direct_water_per_kwh_liters + COEFFICIENTS.indirect_water_per_kwh_liters);
-  const carbonGrams = energyKwh * COEFFICIENTS.carbon_per_kwh_gco2e;
+  const waterLiters = energyKwh * (coeff.direct_water_per_kwh_liters + coeff.indirect_water_per_kwh_liters);
+  const carbonGrams = energyKwh * coeff.carbon_per_kwh_gco2e;
 
   return { energyKwh, waterLiters, carbonGrams };
 }
 
 /**
- * Extract text from a single message object.
+ * Extract text from a single Claude message object.
  * Handles Claude export format: message.content is array of content blocks.
  * Falls back to message.text for alternative formats.
- *
- * Robust against edge cases:
- *   content: null, content: [], content with only tool_use blocks,
- *   content: '' — all fall back to msg.text if available.
- *
- * @param {Object} msg - A chat message object
- * @returns {string} Plain text content
  */
 function getMessageText(msg) {
-  // Claude export: content is array of { type, text } blocks
   if (msg.content != null) {
     const text = extractText(msg.content);
     if (text) return text;
   }
-  // Fallback for alternative formats or when content extraction yields nothing
   if (typeof msg.text === 'string') return msg.text;
   return '';
 }
 
 /**
- * Process a Claude conversations.json export.
- *
- * Tokenization follows spec Section 3.2:
- *   inputTokens  = encode(humanMessages.join(' ')).length
- *   outputTokens = encode(assistantMessages.join(' ')).length
- *
- * @param {Array|Object} rawConversations - The parsed JSON (array or wrapper object)
- * @returns {{ totals, conversations, monthlyData, dateRange }}
+ * Detect the format of the uploaded JSON.
+ * @param {Array|Object} json
+ * @returns {'chatgpt' | 'claude'}
  */
-export function processConversations(rawConversations) {
-  // Handle both array and object with array property
+export function detectFormat(json) {
+  return isChatGPTFormat(json) ? 'chatgpt' : 'claude';
+}
+
+/**
+ * Get the conversations array from raw JSON.
+ */
+function getConvosArray(rawConversations) {
   let convos = rawConversations;
   if (!Array.isArray(convos)) {
     convos = convos.conversations || convos.chat_messages || Object.values(convos);
@@ -75,6 +59,19 @@ export function processConversations(rawConversations) {
       throw new Error('Could not find conversations array in the uploaded file.');
     }
   }
+  return convos;
+}
+
+/**
+ * Process conversations from a single source (Claude or ChatGPT).
+ *
+ * @param {Array|Object} rawConversations - The parsed JSON
+ * @returns {{ totals, conversations, monthlyData, dateRange, source }}
+ */
+export function processConversations(rawConversations) {
+  const format = detectFormat(rawConversations);
+  const coeff = format === 'chatgpt' ? GPT_COEFFICIENTS : COEFFICIENTS;
+  const rawConvos = getConvosArray(rawConversations);
 
   let totalInputTokens = 0;
   let totalOutputTokens = 0;
@@ -83,18 +80,27 @@ export function processConversations(rawConversations) {
   let latestDate = null;
   const monthlyBuckets = {};
 
-  const conversations = convos.map((convo, index) => {
-    const messages = convo.chat_messages || convo.messages || [];
-    const title = convo.name || convo.title || `Conversation ${index + 1}`;
-    const createdAt = convo.created_at || convo.create_time || null;
+  const conversations = rawConvos.map((rawConvo, index) => {
+    let title, createdAt, messages;
 
-    // Step 1: Collect all human and assistant message texts separately
+    if (format === 'chatgpt') {
+      const normalized = normalizeChatGPTConversation(rawConvo);
+      title = normalized.title;
+      createdAt = normalized.createdAt;
+      messages = normalized.messages;
+    } else {
+      messages = rawConvo.chat_messages || rawConvo.messages || [];
+      title = rawConvo.name || rawConvo.title || `Conversation ${index + 1}`;
+      createdAt = rawConvo.created_at || rawConvo.create_time || null;
+    }
+
+    // Collect human and assistant texts
     const humanTexts = [];
     const assistantTexts = [];
 
     for (const msg of messages) {
       const sender = msg.sender || msg.role || 'unknown';
-      const text = getMessageText(msg);
+      const text = (typeof msg.text === 'string' && msg.text) ? msg.text : getMessageText(msg);
       if (!text) continue;
 
       if (sender === 'human' || sender === 'user') {
@@ -104,7 +110,6 @@ export function processConversations(rawConversations) {
       }
     }
 
-    // Step 1 (spec): Join all texts per role, then tokenize once
     const inputTokens = countTokens(humanTexts.join(' '));
     const outputTokens = countTokens(assistantTexts.join(' '));
 
@@ -136,8 +141,7 @@ export function processConversations(rawConversations) {
       }
     }
 
-    // Steps 2–4: Calculate energy, water, carbon
-    const impact = calcImpact(inputTokens, outputTokens);
+    const impact = calcImpact(inputTokens, outputTokens, coeff);
 
     return {
       title,
@@ -146,23 +150,23 @@ export function processConversations(rawConversations) {
       totalTokens: inputTokens + outputTokens,
       inputTokens,
       outputTokens,
+      source: format,
       ...impact,
     };
   });
 
-  // Aggregate totals using the same formula
-  const totalsImpact = calcImpact(totalInputTokens, totalOutputTokens);
+  const totalsImpact = calcImpact(totalInputTokens, totalOutputTokens, coeff);
   const totalTokens = totalInputTokens + totalOutputTokens;
 
-  // Monthly data sorted chronologically
   const monthlyData = Object.values(monthlyBuckets)
     .sort((a, b) => a.month.localeCompare(b.month))
     .map(bucket => ({
       ...bucket,
-      ...calcImpact(bucket.inputTokens, bucket.outputTokens),
+      ...calcImpact(bucket.inputTokens, bucket.outputTokens, coeff),
     }));
 
   return {
+    source: format,
     totals: {
       totalConversations: conversations.length,
       totalMessages,
@@ -177,5 +181,56 @@ export function processConversations(rawConversations) {
       earliest: earliestDate ? earliestDate.toISOString() : null,
       latest: latestDate ? latestDate.toISOString() : null,
     },
+  };
+}
+
+/**
+ * Merge two processed results into one combined result.
+ */
+export function mergeResults(a, b) {
+  const totals = {
+    totalConversations: a.totals.totalConversations + b.totals.totalConversations,
+    totalMessages: a.totals.totalMessages + b.totals.totalMessages,
+    totalTokens: a.totals.totalTokens + b.totals.totalTokens,
+    inputTokens: a.totals.inputTokens + b.totals.inputTokens,
+    outputTokens: a.totals.outputTokens + b.totals.outputTokens,
+    energyKwh: a.totals.energyKwh + b.totals.energyKwh,
+    waterLiters: a.totals.waterLiters + b.totals.waterLiters,
+    carbonGrams: a.totals.carbonGrams + b.totals.carbonGrams,
+  };
+
+  const conversations = [...a.conversations, ...b.conversations]
+    .sort((x, y) => y.totalTokens - x.totalTokens);
+
+  // Merge monthly data
+  const bucketMap = {};
+  for (const bucket of [...a.monthlyData, ...b.monthlyData]) {
+    if (!bucketMap[bucket.month]) {
+      bucketMap[bucket.month] = { ...bucket };
+    } else {
+      const existing = bucketMap[bucket.month];
+      existing.tokens += bucket.tokens;
+      existing.inputTokens += bucket.inputTokens;
+      existing.outputTokens += bucket.outputTokens;
+      existing.conversations += bucket.conversations;
+      existing.energyKwh += bucket.energyKwh;
+      existing.waterLiters += bucket.waterLiters;
+      existing.carbonGrams += bucket.carbonGrams;
+    }
+  }
+  const monthlyData = Object.values(bucketMap).sort((x, y) => x.month.localeCompare(y.month));
+
+  // Expand date range
+  const dates = [a.dateRange.earliest, a.dateRange.latest, b.dateRange.earliest, b.dateRange.latest]
+    .filter(Boolean)
+    .map(d => new Date(d));
+  const earliest = dates.length > 0 ? new Date(Math.min(...dates)).toISOString() : null;
+  const latest = dates.length > 0 ? new Date(Math.max(...dates)).toISOString() : null;
+
+  return {
+    totals,
+    conversations,
+    monthlyData,
+    dateRange: { earliest, latest },
   };
 }

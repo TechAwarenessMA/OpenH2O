@@ -114,6 +114,11 @@ export default function ConvoTable({ conversations, selectedConvo, onSelectConvo
                     >
                       <div className="py-3 px-3 w-2/5">
                         <p className={`font-bold truncate ${selected ? 'text-green' : 'text-ink'}`}>
+                          {convo.source && (
+                            <span className={`inline-block px-1 py-0.5 text-white font-black text-[9px] uppercase mr-1.5 align-middle ${convo.source === 'chatgpt' ? 'bg-[#10a37f]' : 'bg-[#d97706]'}`}>
+                              {convo.source === 'chatgpt' ? 'GPT' : 'C'}
+                            </span>
+                          )}
                           {convo.title || 'Untitled'}
                         </p>
                         <p className="text-xs text-slate font-bold">{formatDate(convo.createdAt)}</p>
