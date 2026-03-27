@@ -38,12 +38,11 @@ export default function Layout({ children, hasData }) {
         {/* Logo + close button */}
         <div className="sidebar-logo-area">
           <div className="flex items-center justify-between w-full">
-            <NavLink to="/" aria-label="OpenH2O Home" className="logo-link flex items-center gap-2.5">
+            <NavLink to="/" aria-label="OpenH2O Home" className={`logo-link flex items-center gap-2.5 ${collapsed && !sidebarOpen ? 'mx-auto' : ''}`}>
               <img
                 src="/logo.png"
-                alt="OpenH2O logo"
-                className="logo-img transition-transform hover:scale-105"
-                style={{ width: collapsed && !sidebarOpen ? '2rem' : '2.6rem', height: collapsed && !sidebarOpen ? '2rem' : '2.6rem', objectFit: 'cover', borderRadius: '6px' }}
+                alt="OpenH2O"
+                style={{ width: '2.2rem', height: '2.2rem', objectFit: 'cover', borderRadius: '6px', flexShrink: 0 }}
               />
               {(!collapsed || sidebarOpen) && (
                 <div className="logo-text-group">
@@ -133,7 +132,7 @@ export default function Layout({ children, hasData }) {
           <NavLink to="/" className="logo-link flex items-center gap-2" aria-label="OpenH2O Home">
             <img
               src="/logo.png"
-              alt="OpenH2O logo"
+              alt="OpenH2O"
               style={{ width: '1.8rem', height: '1.8rem', objectFit: 'cover', borderRadius: '4px' }}
             />
             <span className="logo-name" style={{ fontSize: '0.9rem' }}>OpenH2O</span>
