@@ -6,6 +6,7 @@ import { formatNumber, formatDate } from '../utils/formatters';
 import { getComparisons } from '../data/comparisons';
 import { COEFFICIENTS } from '../data/coefficients';
 import { Zap, Droplets, Cloud, ArrowRight, BookOpen, Calendar } from 'lucide-react';
+import MetricDetailPanel from '../components/MetricDetailPanel';
 
 /* ── Animated count-up ─────────────────────────────────────── */
 function useCountUp(target, duration = 1600) {
@@ -33,11 +34,15 @@ function N({ value, decimals = 0 }) {
 }
 
 /* ── Big 3 Metric Card ─────────────────────────────────────── */
-function MetricCard({ label, value, decimals, unit, icon: Icon, accentColor, shadowColor, equivs }) {
+function MetricCard({ label, value, decimals, unit, icon: Icon, accentColor, shadowColor, equivs, onClick, active }) {
   return (
     <div
-      className="bg-white border-4 border-navy p-5 md:p-6 flex flex-col gap-3 transition-transform hover:-translate-y-0.5 overflow-hidden"
-      style={{ boxShadow: `8px 8px 0px 0px ${shadowColor}` }}
+      onClick={onClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onClick?.(); }}
+      className={`bg-white border-4 border-navy p-5 md:p-6 flex flex-col gap-3 transition-transform hover:-translate-y-0.5 overflow-hidden cursor-pointer ${active ? 'ring-4 ring-offset-2' : ''}`}
+      style={{ boxShadow: `8px 8px 0px 0px ${shadowColor}`, ...(active ? { ringColor: shadowColor } : {}) }}
     >
       <div className="flex items-center gap-2">
         <div
@@ -294,8 +299,10 @@ function ContextGrid({ comparisons }) {
 
 /* ── Dashboard ─────────────────────────────────────────────── */
 export default function Dashboard() {
-  const { hasData, totals, monthlyData, dateRange, sources } = useEcoData();
+  const { hasData, totals, monthlyData, dateRange, sources, conversations } = useEcoData();
   const navigate = useNavigate();
+  const [activePanel, setActivePanel] = useState(null);
+  const togglePanel = (panel) => setActivePanel(prev => prev === panel ? null : panel);
 
   if (!hasData) {
     return (
@@ -330,7 +337,8 @@ export default function Dashboard() {
       : null;
 
   return (
-    <div className="space-y-6 animate-fade-in-up">
+    <div className="flex flex-col lg:flex-row gap-6 animate-fade-in-up">
+    <div className={`space-y-6 ${activePanel ? 'flex-1 min-w-0' : 'w-full'}`}>
 
       {/* ── Header Row ──────────────────────────────────────── */}
       <div
@@ -382,6 +390,8 @@ export default function Dashboard() {
           accentColor="#FB4B5F"
           shadowColor="#FB4B5F"
           equivs={[comparisons.badges[4], comparisons.badges[5]]}
+          onClick={() => togglePanel('carbon')}
+          active={activePanel === 'carbon'}
         />
         <MetricCard
           label="Total Water"
@@ -392,6 +402,8 @@ export default function Dashboard() {
           accentColor="#16C0FF"
           shadowColor="#16C0FF"
           equivs={[comparisons.badges[2], comparisons.badges[3]]}
+          onClick={() => togglePanel('water')}
+          active={activePanel === 'water'}
         />
         <MetricCard
           label="Total Energy"
@@ -402,6 +414,8 @@ export default function Dashboard() {
           accentColor="#2ECC71"
           shadowColor="#2ECC71"
           equivs={[comparisons.badges[0], comparisons.badges[1]]}
+          onClick={() => togglePanel('energy')}
+          active={activePanel === 'energy'}
         />
       </div>
 
@@ -426,7 +440,11 @@ export default function Dashboard() {
       {/* ── Monthly Usage Chart ─────────────────────────────── */}
       {monthlyData.length > 1 && (
         <div
-          className="bg-white border-4 border-navy p-6"
+          onClick={() => togglePanel('monthly')}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') togglePanel('monthly'); }}
+          className={`bg-white border-4 border-navy p-6 cursor-pointer transition-transform hover:-translate-y-0.5 ${activePanel === 'monthly' ? 'ring-4 ring-offset-2 ring-sunshine' : ''}`}
           style={{ boxShadow: '4px 4px 0px 0px #2C3E50' }}
         >
           <h2 className="text-lg font-black text-navy uppercase tracking-wider mb-4">
@@ -485,6 +503,24 @@ export default function Dashboard() {
           See methodology →
         </button>
       </p>
+
+    </div>
+
+    {/* ── Detail Panel (right side) ───────────────────────── */}
+    {activePanel && (
+      <div className="w-full lg:w-[400px] lg:flex-shrink-0">
+        <div className="lg:sticky lg:top-4">
+          <MetricDetailPanel
+            panel={activePanel}
+            totals={totals}
+            conversations={conversations}
+            monthlyData={monthlyData}
+            comparisons={comparisons}
+            onClose={() => setActivePanel(null)}
+          />
+        </div>
+      </div>
+    )}
 
     </div>
   );
