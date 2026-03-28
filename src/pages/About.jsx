@@ -14,7 +14,8 @@ export default function About() {
           <div className="w-8 h-8 bg-coral flex items-center justify-center">
             <Heart size={18} className="text-white" />
           </div>
-          <h2 className="text-lg font-black text-navy uppercase tracking-wider">Our Mission</h2>
+          <h2 className="text-lg font-
+        black text-navy uppercase tracking-wider">Our Mission</h2>
         </div>
         <div className="space-y-3 text-sm text-ink font-bold leading-relaxed">
           <p>
