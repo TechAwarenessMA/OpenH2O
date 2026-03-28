@@ -5,8 +5,10 @@ import UsageChart from '../components/UsageChart';
 import { formatNumber, formatDate } from '../utils/formatters';
 import { getComparisons } from '../data/comparisons';
 import { COEFFICIENTS } from '../data/coefficients';
-import { Zap, Droplets, Cloud, ArrowRight, BookOpen, Calendar } from 'lucide-react';
+import { GPT_COEFFICIENTS } from '../data/gptCoefficients';
+import { Zap, Droplets, Cloud, ArrowRight, BookOpen, Calendar, FlaskConical, Download } from 'lucide-react';
 import MetricDetailPanel from '../components/MetricDetailPanel';
+import { exportConversationsCSV } from '../utils/exportCsv';
 
 /* ── Animated count-up ─────────────────────────────────────── */
 function useCountUp(target, duration = 1600) {
@@ -80,13 +82,16 @@ function MetricCard({ label, value, decimals, unit, icon: Icon, accentColor, sha
 }
 
 /* ── Token Distribution Panel ──────────────────────────────── */
-function TokenPanel({ inputTokens, outputTokens }) {
+function TokenPanel({ inputTokens, outputTokens, sources }) {
   const total = inputTokens + outputTokens;
   const inputPct = total > 0 ? Math.round((inputTokens / total) * 100) : 0;
   const outputPct = 100 - inputPct;
 
-  const inputEnergyWh = inputTokens * COEFFICIENTS.energy_per_input_token_wh;
-  const outputEnergyWh = outputTokens * COEFFICIENTS.energy_per_output_token_wh;
+  const isMixed = sources && sources.length > 1;
+  const coeff = sources && sources.length === 1 && sources[0] === 'chatgpt' ? GPT_COEFFICIENTS : COEFFICIENTS;
+
+  const inputEnergyWh = inputTokens * coeff.energy_per_input_token_wh;
+  const outputEnergyWh = outputTokens * coeff.energy_per_output_token_wh;
   const totalEnergyWh = inputEnergyWh + outputEnergyWh;
   const inputEnergyPct = totalEnergyWh > 0 ? Math.round((inputEnergyWh / totalEnergyWh) * 100) : 0;
   const outputEnergyPct = 100 - inputEnergyPct;
@@ -107,7 +112,7 @@ function TokenPanel({ inputTokens, outputTokens }) {
           </p>
           <p className="text-3xl font-black text-navy">{formatNumber(inputTokens)}</p>
           <p className="text-xs font-bold text-slate mt-1">
-            {inputPct}% of tokens · {inputEnergyPct}% of energy
+            {inputPct}% of tokens · {isMixed ? 'energy varies by model' : `${inputEnergyPct}% of energy`}
           </p>
         </div>
         <div className="p-5 bg-cream border-4 border-navy/10">
@@ -116,7 +121,7 @@ function TokenPanel({ inputTokens, outputTokens }) {
           </p>
           <p className="text-3xl font-black text-navy">{formatNumber(outputTokens)}</p>
           <p className="text-xs font-bold text-slate mt-1">
-            {outputPct}% of tokens · {outputEnergyPct}% of energy
+            {outputPct}% of tokens · {isMixed ? 'energy varies by model' : `${outputEnergyPct}% of energy`}
           </p>
         </div>
       </div>
@@ -131,17 +136,22 @@ function TokenPanel({ inputTokens, outputTokens }) {
         <span className="text-xs font-black text-coral">Output · {outputPct}%</span>
       </div>
 
-      <p className="text-xs font-black text-slate uppercase tracking-wider mb-2 mt-4">Energy Contribution</p>
-      <div className="h-4 border-4 border-navy flex overflow-hidden">
-        <div className="bg-sky transition-all" style={{ width: `${inputEnergyPct}%` }} />
-        <div className="bg-coral flex-1" />
-      </div>
-      <div className="flex justify-between mt-1.5">
-        <span className="text-xs font-black text-sky">Input · {inputEnergyPct}%</span>
-        <span className="text-xs font-black text-coral">Output · {outputEnergyPct}%</span>
-      </div>
+      {!isMixed && (
+        <>
+          <p className="text-xs font-black text-slate uppercase tracking-wider mb-2 mt-4">Energy Contribution</p>
+          <div className="h-4 border-4 border-navy flex overflow-hidden">
+            <div className="bg-sky transition-all" style={{ width: `${inputEnergyPct}%` }} />
+            <div className="bg-coral flex-1" />
+          </div>
+          <div className="flex justify-between mt-1.5">
+            <span className="text-xs font-black text-sky">Input · {inputEnergyPct}%</span>
+            <span className="text-xs font-black text-coral">Output · {outputEnergyPct}%</span>
+          </div>
+        </>
+      )}
       <p className="text-xs font-bold text-slate/60 mt-3">
         Output tokens cost ~3× more energy than input tokens (autoregressive generation vs. single forward pass)
+        {isMixed && '. Energy ratios vary between Claude and GPT — see Methodology for details.'}
       </p>
     </div>
   );
@@ -326,10 +336,10 @@ export default function Dashboard() {
   const inputTokens = totals.inputTokens ?? 0;
   const outputTokens = totals.outputTokens ?? 0;
   const totalMessages = totals.totalMessages ?? 0;
-  const avgTokens = Math.round(totals.totalTokens / totals.totalConversations);
-  const energyPerConvo = totals.energyKwh / totals.totalConversations;
-  const waterPerConvo = totals.waterLiters / totals.totalConversations;
-  const carbonPerConvo = totals.carbonGrams / totals.totalConversations;
+  const avgTokens = totals.totalConversations > 0 ? Math.round(totals.totalTokens / totals.totalConversations) : 0;
+  const energyPerConvo = totals.totalConversations > 0 ? totals.energyKwh / totals.totalConversations : 0;
+  const waterPerConvo = totals.totalConversations > 0 ? totals.waterLiters / totals.totalConversations : 0;
+  const carbonPerConvo = totals.totalConversations > 0 ? totals.carbonGrams / totals.totalConversations : 0;
 
   const dateLabel =
     dateRange?.earliest && dateRange?.latest
@@ -345,9 +355,18 @@ export default function Dashboard() {
         className="border-4 border-navy bg-white p-6"
         style={{ boxShadow: '4px 4px 0px 0px #2C3E50' }}
       >
-        <h1 className="text-3xl md:text-4xl font-black text-navy tracking-tight uppercase">
-          Your Impact
-        </h1>
+        <div className="flex items-start justify-between gap-3">
+          <h1 className="text-3xl md:text-4xl font-black text-navy tracking-tight uppercase">
+            Your Impact
+          </h1>
+          <button
+            onClick={() => exportConversationsCSV(conversations)}
+            className="flex items-center gap-1.5 px-3 py-2 text-xs font-black uppercase tracking-wider border-2 border-navy/20 text-slate hover:border-navy hover:text-navy transition-colors flex-shrink-0"
+            title="Export data as CSV"
+          >
+            <Download size={13} /> Export CSV
+          </button>
+        </div>
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-3">
           {dateLabel && (
             <span className="flex items-center gap-1.5 text-sm font-bold text-slate">
@@ -368,7 +387,13 @@ export default function Dashboard() {
           </span>
         </div>
         <p className="text-xs font-bold text-slate/60 mt-3">
-          Calculated using {sources.map(s => s === 'claude' ? 'Claude Sonnet 4.6' : 'GPT-5').join(' + ')} coefficients ·{' '}
+          Calculated using {sources.map(s => s === 'claude' ? 'Claude Sonnet 4.6' : 'GPT-5').join(' + ')} coefficients
+          {sources.includes('chatgpt') && (
+            <span className="inline-flex items-center gap-1 ml-1.5 px-1.5 py-0.5 bg-amber-100 border border-amber-400 text-amber-700 text-[10px] font-black uppercase rounded-sm">
+              <FlaskConical size={10} /> GPT-5 estimates experimental
+            </span>
+          )}
+          {' '}·{' '}
           estimates ±{COEFFICIENTS.uncertainty_range_pct}% ·{' '}
           <button
             onClick={() => navigate('/methodology')}
@@ -455,7 +480,7 @@ export default function Dashboard() {
       )}
 
       {/* ── Token Distribution ──────────────────────────────── */}
-      <TokenPanel inputTokens={inputTokens} outputTokens={outputTokens} />
+      <TokenPanel inputTokens={inputTokens} outputTokens={outputTokens} sources={sources} />
 
       {/* ── Projection slider ───────────────────────────────── */}
       <Projection
@@ -506,20 +531,29 @@ export default function Dashboard() {
 
     </div>
 
-    {/* ── Detail Panel (right side) ───────────────────────── */}
+    {/* ── Detail Panel — desktop: right column, mobile: bottom sheet ─── */}
     {activePanel && (
-      <div className="w-full lg:w-[400px] lg:flex-shrink-0">
-        <div className="lg:sticky lg:top-4">
-          <MetricDetailPanel
-            panel={activePanel}
-            totals={totals}
-            conversations={conversations}
-            monthlyData={monthlyData}
-            comparisons={comparisons}
-            onClose={() => setActivePanel(null)}
-          />
+      <>
+        {/* Mobile overlay backdrop */}
+        <div
+          className="fixed inset-0 bg-black/40 z-40 lg:hidden"
+          onClick={() => setActivePanel(null)}
+          aria-hidden="true"
+        />
+        {/* Panel */}
+        <div className="fixed inset-x-0 bottom-0 z-50 max-h-[85vh] overflow-y-auto lg:static lg:z-auto lg:max-h-none lg:w-[400px] lg:flex-shrink-0">
+          <div className="lg:sticky lg:top-4">
+            <MetricDetailPanel
+              panel={activePanel}
+              totals={totals}
+              conversations={conversations}
+              monthlyData={monthlyData}
+              comparisons={comparisons}
+              onClose={() => setActivePanel(null)}
+            />
+          </div>
         </div>
-      </div>
+      </>
     )}
 
     </div>

@@ -1,5 +1,6 @@
 import { Routes, Route } from 'react-router-dom';
 import { EcoDataProvider, useEcoData } from './hooks/useEcoData';
+import ErrorBoundary from './components/ErrorBoundary';
 import Layout from './components/Layout';
 import Landing from './pages/Landing';
 import Processing from './pages/Processing';
@@ -8,6 +9,7 @@ import Breakdown from './pages/Breakdown';
 import Insights from './pages/Insights';
 import Methodology from './pages/Methodology';
 import About from './pages/About';
+import NotFound from './pages/NotFound';
 
 function AppRoutes() {
   const { hasData } = useEcoData();
@@ -22,6 +24,7 @@ function AppRoutes() {
         <Route path="/insights" element={<Insights />} />
         <Route path="/methodology" element={<Methodology />} />
         <Route path="/about" element={<About />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </Layout>
   );
@@ -30,7 +33,9 @@ function AppRoutes() {
 export default function App() {
   return (
     <EcoDataProvider>
-      <AppRoutes />
+      <ErrorBoundary>
+        <AppRoutes />
+      </ErrorBoundary>
     </EcoDataProvider>
   );
 }

@@ -20,6 +20,8 @@ function extractChatGPTText(content) {
 
 /**
  * Flatten a ChatGPT mapping tree into a sorted array of messages.
+ * Walks the canonical path (last child at each branch) to avoid
+ * double-counting regenerated responses.
  *
  * @param {Object} mapping - The convo.mapping object keyed by node UUID
  * @returns {Array<{ role: string, text: string }>}
@@ -27,29 +29,46 @@ function extractChatGPTText(content) {
 export function flattenChatGPTMessages(mapping) {
   if (!mapping || typeof mapping !== 'object') return [];
 
-  const messages = [];
-
-  for (const node of Object.values(mapping)) {
-    if (!node.message) continue;
-
-    const msg = node.message;
-    const role = msg.author?.role;
-
-    // Skip system messages and tool messages
-    if (!role || role === 'system' || role === 'tool') continue;
-
-    const text = extractChatGPTText(msg.content);
-    if (!text) continue;
-
-    messages.push({
-      role,
-      text,
-      create_time: msg.create_time || 0,
-    });
+  // Find root node (no parent or parent not in mapping)
+  let rootId = null;
+  for (const [id, node] of Object.entries(mapping)) {
+    if (!node.parent || !mapping[node.parent]) {
+      rootId = id;
+      break;
+    }
   }
+  if (!rootId) return [];
 
-  // Sort by creation time
-  messages.sort((a, b) => a.create_time - b.create_time);
+  // Walk canonical path: always follow last child (active branch)
+  const messages = [];
+  let currentId = rootId;
+
+  while (currentId) {
+    const node = mapping[currentId];
+    if (!node) break;
+
+    if (node.message) {
+      const msg = node.message;
+      const role = msg.author?.role;
+
+      if (role && role !== 'system' && role !== 'tool') {
+        const text = extractChatGPTText(msg.content);
+        if (text) {
+          messages.push({
+            role,
+            text,
+            create_time: msg.create_time || 0,
+          });
+        }
+      }
+    }
+
+    // Follow last child (active/latest branch)
+    const children = node.children;
+    currentId = children && children.length > 0
+      ? children[children.length - 1]
+      : null;
+  }
 
   return messages;
 }

@@ -162,7 +162,17 @@ export default function Methodology() {
       >
         <h2 className="text-lg font-black text-navy uppercase tracking-wider">Coefficients Used</h2>
         <CoefficientsTable label="Claude Sonnet 4.6" coeff={COEFFICIENTS} accentColor="#d97706" />
-        <CoefficientsTable label="GPT-5" coeff={GPT_COEFFICIENTS} accentColor="#10a37f" />
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-100 border border-amber-400 text-amber-700 text-[10px] font-black uppercase rounded-sm">
+              Experimental Estimates
+            </span>
+          </div>
+          <CoefficientsTable label="GPT-5" coeff={GPT_COEFFICIENTS} accentColor="#10a37f" />
+          <p className="text-[11px] font-bold text-slate/70 mt-2 leading-snug">
+            GPT-5 energy values are based on early research estimates (Epoch AI, Tom's Hardware) and carry higher uncertainty than Claude coefficients. These will be updated as more data becomes available.
+          </p>
+        </div>
       </div>
 
       {/* Real-world comparisons table */}

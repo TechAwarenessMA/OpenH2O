@@ -1,6 +1,8 @@
-import { createContext, useContext, useState, useCallback } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect } from 'react';
 
 const EcoDataContext = createContext(null);
+
+const STORAGE_KEY = 'openh2o_data';
 
 const EMPTY_STATE = {
   status: 'idle', // idle | processing | done | error
@@ -13,8 +15,56 @@ const EMPTY_STATE = {
   error: null,
 };
 
+function loadCachedState() {
+  try {
+    const raw = sessionStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const cached = JSON.parse(raw);
+    if (cached && cached.status === 'done' && cached.totals) {
+      return cached;
+    }
+  } catch { /* ignore corrupt data */ }
+  return null;
+}
+
+function saveCachedState(state) {
+  try {
+    // Save everything except rawData (too large for sessionStorage)
+    const toSave = {
+      status: state.status,
+      sources: state.sources,
+      totals: state.totals,
+      conversations: state.conversations,
+      monthlyData: state.monthlyData,
+      dateRange: state.dateRange,
+    };
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
+  } catch { /* quota exceeded — fail silently */ }
+}
+
 export function EcoDataProvider({ children }) {
-  const [state, setState] = useState(EMPTY_STATE);
+  const [state, setState] = useState(() => {
+    const cached = loadCachedState();
+    if (cached) {
+      return {
+        ...EMPTY_STATE,
+        status: 'done',
+        sources: cached.sources || [],
+        totals: cached.totals,
+        conversations: cached.conversations || [],
+        monthlyData: cached.monthlyData || [],
+        dateRange: cached.dateRange || { earliest: null, latest: null },
+      };
+    }
+    return EMPTY_STATE;
+  });
+
+  // Persist to sessionStorage whenever we reach 'done' status
+  useEffect(() => {
+    if (state.status === 'done' && state.totals) {
+      saveCachedState(state);
+    }
+  }, [state]);
 
   const uploadFile = useCallback(async (file) => {
     setState(s => ({ ...s, status: 'processing', error: null }));
@@ -81,6 +131,7 @@ export function EcoDataProvider({ children }) {
 
   const clearData = useCallback(() => {
     setState(EMPTY_STATE);
+    try { sessionStorage.removeItem(STORAGE_KEY); } catch {}
   }, []);
 
   const value = {
