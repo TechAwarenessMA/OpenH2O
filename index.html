@@ -1,26 +1,1215 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" type="image/png" href="/favicon.png" />
-    <link rel="apple-touch-icon" href="/favicon.png" />
-    <title>OpenH2O — Know Your AI Footprint</title>
-    <meta name="description" content="Upload your Claude conversations export and see your AI environmental impact — energy, water, and carbon." />
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-SDVWTGXJ28"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-SDVWTGXJ28');
-    </script>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet" />
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    html, body { margin: 0; padding: 0; background: #F1EFE9; }
+    ::selection { background: #111110; color: #F1EFE9; }
+    input[type="range"] { accent-color: #111110; }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+  </style>
+</helmet>
+
+<div style="font-family:Archivo,sans-serif; background:#F1EFE9; color:#111110; min-height:100vh; display:flex; flex-direction:column; -webkit-font-smoothing:antialiased;">
+
+  <sc-if value="{{ texture }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed; inset:0; z-index:99; pointer-events:none; background:repeating-linear-gradient(0deg, rgba(17,17,16,0.028) 0px, rgba(17,17,16,0.028) 1px, transparent 1px, transparent 3px);"></div>
+  </sc-if>
+
+  <!-- ══ NAV ══════════════════════════════════════════════════ -->
+  <header style="position:sticky; top:0; z-index:50; background:#F1EFE9; border-bottom:2px solid #111110; display:flex; align-items:stretch; justify-content:space-between; gap:16px; padding:0 clamp(16px,3vw,40px); min-height:58px; flex-wrap:wrap;">
+    <button onClick="{{ goHome }}" style="display:flex; align-items:center; gap:10px; background:transparent; border:none; cursor:pointer; padding:0; color:#111110;">
+      <span style="font-family:Anton,sans-serif; font-size:22px; letter-spacing:0.01em; text-transform:uppercase;">OpenH2O</span>
+      <span style="font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:0.18em; color:#6E6B62;">&reg; BY TAA</span>
+    </button>
+    <nav style="display:flex; align-items:stretch; flex-wrap:wrap;">
+      <sc-for list="{{ navItems }}" as="item" hint-placeholder-count="6">
+        <button onClick="{{ item.go }}" style="font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.16em; text-transform:uppercase; border:none; cursor:pointer; padding:0 clamp(8px,1.4vw,18px); background:{{ item.bg }}; color:{{ item.fg }};" style-hover="text-decoration:underline;">{{ item.label }}</button>
+      </sc-for>
+    </nav>
+    <div style="display:flex; align-items:center; gap:14px;">
+      <sc-if value="{{ hasData }}" hint-placeholder-val="{{ false }}">
+        <span style="font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:0.16em;">&#9679; DATA LIVE</span>
+        <button onClick="{{ resetData }}" style="font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:0.16em; background:transparent; border:1px solid #111110; color:#111110; padding:5px 10px; cursor:pointer;" style-hover="background:#111110; color:#F1EFE9;">RESET</button>
+      </sc-if>
+    </div>
+  </header>
+
+  <!-- ══ LANDING ══════════════════════════════════════════════ -->
+  <sc-if value="{{ isLanding }}" hint-placeholder-val="{{ true }}">
+    <section data-screen-label="Landing" style="animation:fadeUp 0.5s ease both;">
+      <div style="display:grid; grid-template-columns:minmax(0,1.55fr) minmax(340px,1fr); border-bottom:2px solid #111110;">
+
+        <!-- Hero -->
+        <div style="padding:clamp(28px,5vw,72px) clamp(20px,4vw,64px); display:flex; flex-direction:column; gap:28px; min-height:60vh;">
+          <p style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.2em; text-transform:uppercase; margin:0; color:#111110;">(01) &mdash; AI Environmental Impact Calculator</p>
+          <h1 style="font-family:Anton,sans-serif; font-size:clamp(52px,8.2vw,142px); line-height:0.96; margin:0; text-transform:uppercase; letter-spacing:0.005em;">
+            Every prompt<br>
+            <span style="color:transparent; -webkit-text-stroke:2.5px #111110;">costs the</span><br>
+            planet.
+          </h1>
+          <p style="font-size:16px; line-height:1.55; max-width:520px; margin:0; color:#3D3B36; font-weight:500;">
+            Upload your AI conversation history from Claude or ChatGPT and discover the real energy, water, and carbon footprint of your AI use.
+          </p>
+          <div style="display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:0; margin-top:auto; border-top:1px solid rgba(17,17,16,0.25);">
+            <div style="padding:18px 18px 0 0;">
+              <span style="font-family:Anton,sans-serif; font-size:clamp(24px,2.6vw,40px); display:block;">0.003</span>
+              <span style="font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:0.16em; text-transform:uppercase; color:#6E6B62;">kWh per message</span>
+            </div>
+            <div style="padding:18px 18px 0 18px; border-left:1px solid rgba(17,17,16,0.25);">
+              <span style="font-family:Anton,sans-serif; font-size:clamp(24px,2.6vw,40px); display:block;">500ml</span>
+              <span style="font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:0.16em; text-transform:uppercase; color:#6E6B62;">water per session</span>
+            </div>
+            <div style="padding:18px 0 0 18px; border-left:1px solid rgba(17,17,16,0.25);">
+              <span style="font-family:Anton,sans-serif; font-size:clamp(24px,2.6vw,40px); display:block;">1.5g</span>
+              <span style="font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:0.16em; text-transform:uppercase; color:#6E6B62;">CO&#8322; per response</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Upload column -->
+        <div style="border-left:2px solid #111110; padding:clamp(24px,3vw,44px) clamp(20px,2.5vw,36px); display:flex; flex-direction:column; gap:18px;">
+          <p style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.2em; text-transform:uppercase; margin:0;">(02) &mdash; Upload</p>
+          <h2 style="font-family:Anton,sans-serif; font-size:clamp(24px,2.4vw,34px); margin:0; text-transform:uppercase; line-height:1.05;">See your actual footprint</h2>
+          <p style="font-size:13.5px; line-height:1.55; margin:0; color:#3D3B36; font-weight:500;">Drop your <span style="font-family:'IBM Plex Mono',monospace; font-size:12px; background:#E5E2D9; padding:1px 5px;">conversations.json</span> from Claude or ChatGPT &mdash; processed entirely in your browser.</p>
+
+          <input type="file" accept=".json,.zip" ref="{{ fileRef }}" onChange="{{ onFileChange }}" style="display:none;">
+
+          <div onClick="{{ openPicker }}" onDrop="{{ onDrop }}" onDragOver="{{ onDragOver }}" onDragLeave="{{ onDragLeave }}" role="button" tabindex="0" style="border:2px solid #111110; min-height:190px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; text-align:center; cursor:pointer; padding:24px; background:{{ dropBg }}; color:{{ dropFg }};">
+            <sc-if value="{{ noFile }}" hint-placeholder-val="{{ true }}">
+              <span style="font-family:Anton,sans-serif; font-size:44px; line-height:1;">&darr;</span>
+              <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.14em; text-transform:uppercase; font-weight:600;">{{ dropText }}</span>
+              <span style="font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:0.12em; text-transform:uppercase; opacity:0.55;">or click to browse &middot; .json / .zip &middot; max 500 MB</span>
+            </sc-if>
+            <sc-if value="{{ hasFile }}" hint-placeholder-val="{{ false }}">
+              <span style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.06em; font-weight:600; word-break:break-all;">{{ fileName }}</span>
+              <span style="font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.12em; text-transform:uppercase; opacity:0.6;">{{ fileSize }} &middot; ready to analyze</span>
+              <button onClick="{{ clearFile }}" style="font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:0.16em; background:transparent; border:1px solid currentColor; color:inherit; padding:5px 12px; cursor:pointer; text-transform:uppercase;">&times; Remove</button>
+            </sc-if>
+          </div>
+
+          <sc-if value="{{ hasError }}" hint-placeholder-val="{{ false }}">
+            <p style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.08em; margin:0; border:1px solid #111110; padding:10px 12px; background:#111110; color:#F1EFE9;">! {{ errorMsg }}</p>
+          </sc-if>
+
+          <sc-if value="{{ hasFile }}" hint-placeholder-val="{{ false }}">
+            <button onClick="{{ analyze }}" style="font-family:Anton,sans-serif; font-size:18px; text-transform:uppercase; letter-spacing:0.03em; background:#111110; color:#F1EFE9; border:2px solid #111110; padding:16px 20px; cursor:pointer; width:100%;" style-hover="background:#F1EFE9; color:#111110;">Analyze my impact &rarr;</button>
+          </sc-if>
+          <sc-if value="{{ noFile }}" hint-placeholder-val="{{ true }}">
+            <div style="border-top:1px solid rgba(17,17,16,0.25); padding-top:14px; font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; line-height:2; color:#3D3B36;">
+              Don't have the file?<br>
+              <span style="color:#111110; font-weight:600;">Claude</span> &nbsp;claude.ai &rarr; Settings &rarr; Export Data<br>
+              <span style="color:#111110; font-weight:600;">ChatGPT</span> &nbsp;Settings &rarr; Data Controls &rarr; Export
+            </div>
+          </sc-if>
+
+          <button onClick="{{ loadSample }}" style="font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.16em; text-transform:uppercase; background:transparent; border:none; color:#111110; text-decoration:underline; text-underline-offset:3px; cursor:pointer; padding:0; text-align:left;">Or explore with sample data &rarr;</button>
+
+          <sc-if value="{{ hasData }}" hint-placeholder-val="{{ false }}">
+            <div style="background:#111110; color:#F1EFE9; padding:16px 18px; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+              <span style="font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.14em; text-transform:uppercase;">&#9679; {{ sourcesLabel }} data loaded</span>
+              <button onClick="{{ goDashboard }}" style="font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.14em; text-transform:uppercase; background:#F1EFE9; color:#111110; border:none; padding:8px 14px; cursor:pointer; font-weight:600;">View dashboard &rarr;</button>
+            </div>
+          </sc-if>
+
+          <p style="font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:0.14em; text-transform:uppercase; margin:auto 0 0; color:#6E6B62; line-height:1.8;">&#9632; Your data never leaves your device.<br>Zero servers. Zero storage.</p>
+        </div>
+      </div>
+
+      <!-- Giant footer wordmark -->
+      <div style="overflow:hidden; padding:clamp(20px,3vw,48px) 0 0; text-align:center;">
+        <div style="font-family:Anton,sans-serif; font-size:clamp(80px,16.5vw,260px); line-height:0.85; text-transform:uppercase; white-space:nowrap; letter-spacing:0.005em; transform:translateY(6%);">OPEN<span style="color:transparent; -webkit-text-stroke:3px #111110;">H2O</span></div>
+      </div>
+    </section>
+  </sc-if>
+
+  <!-- ══ PROCESSING ═══════════════════════════════════════════ -->
+  <sc-if value="{{ isProcessing }}" hint-placeholder-val="{{ false }}">
+    <section data-screen-label="Processing" style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:32px; min-height:70vh; padding:40px 20px; animation:fadeUp 0.4s ease both;">
+      <h1 style="font-family:Anton,sans-serif; font-size:clamp(48px,9vw,120px); margin:0; text-transform:uppercase; color:transparent; -webkit-text-stroke:2.5px #111110; line-height:1;">Analyzing</h1>
+      <div style="width:min(440px, 82vw); border:2px solid #111110; height:20px; background:#F1EFE9;">
+        <div style="height:100%; background:#111110; transition:width 0.4s ease; width:{{ procPct }}%;"></div>
+      </div>
+      <p style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.18em; text-transform:uppercase; margin:0; animation:blink 1.6s ease infinite;">{{ procMsg }}</p>
+      <sc-if value="{{ procHasError }}" hint-placeholder-val="{{ false }}">
+        <div style="border:2px solid #111110; padding:20px 24px; max-width:440px; text-align:center; display:flex; flex-direction:column; gap:12px;">
+          <p style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.14em; text-transform:uppercase; margin:0; font-weight:600;">! Something went wrong</p>
+          <p style="font-size:13px; margin:0; color:#3D3B36;">{{ procErrorMsg }}</p>
+          <button onClick="{{ tryAgain }}" style="font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.16em; text-transform:uppercase; background:#111110; color:#F1EFE9; border:none; padding:10px 18px; cursor:pointer; align-self:center;">Try again</button>
+        </div>
+      </sc-if>
+    </section>
+  </sc-if>
+
+  <!-- ══ EMPTY STATE ══════════════════════════════════════════ -->
+  <sc-if value="{{ showEmpty }}" hint-placeholder-val="{{ false }}">
+    <section data-screen-label="No data" style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:22px; min-height:60vh; padding:40px 20px; text-align:center; animation:fadeUp 0.4s ease both;">
+      <h2 style="font-family:Anton,sans-serif; font-size:clamp(44px,7vw,90px); margin:0; text-transform:uppercase; color:transparent; -webkit-text-stroke:2px #111110; line-height:1;">No data yet</h2>
+      <p style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.16em; text-transform:uppercase; margin:0; color:#6E6B62;">Upload your conversations.json to see your impact</p>
+      <button onClick="{{ goHome }}" style="font-family:Anton,sans-serif; font-size:16px; text-transform:uppercase; background:#111110; color:#F1EFE9; border:2px solid #111110; padding:14px 28px; cursor:pointer;" style-hover="background:#F1EFE9; color:#111110;">Upload data &rarr;</button>
+    </section>
+  </sc-if>
+
+  <!-- ══ DASHBOARD ════════════════════════════════════════════ -->
+  <sc-if value="{{ showDashboard }}" hint-placeholder-val="{{ false }}">
+    <section data-screen-label="Dashboard" style="max-width:1280px; width:100%; margin:0 auto; padding:clamp(24px,4vw,56px) clamp(16px,3vw,40px) 64px; box-sizing:border-box; display:flex; flex-direction:column; gap:clamp(32px,4vw,56px); animation:fadeUp 0.5s ease both;">
+
+      <!-- Header -->
+      <div>
+        <div style="display:flex; align-items:flex-end; justify-content:space-between; gap:16px; flex-wrap:wrap;">
+          <h1 style="font-family:Anton,sans-serif; font-size:clamp(48px,7vw,96px); margin:0; text-transform:uppercase; line-height:0.95;">Your impact</h1>
+          <button onClick="{{ exportCsv }}" style="font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.16em; text-transform:uppercase; background:transparent; border:1px solid #111110; color:#111110; padding:9px 16px; cursor:pointer; margin-bottom:8px;" style-hover="background:#111110; color:#F1EFE9;">&darr; Export CSV</button>
+        </div>
+        <p style="font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.14em; text-transform:uppercase; margin:14px 0 0; line-height:2.1;">{{ dateLabel }} &nbsp;&middot;&nbsp; {{ convoCount }} conversations &nbsp;&middot;&nbsp; {{ msgCount }} messages &nbsp;&middot;&nbsp; {{ avgTokens }} avg tokens/convo</p>
+        <p style="font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:0.12em; text-transform:uppercase; margin:4px 0 0; color:#6E6B62;">Calculated using {{ modelsLabel }} coefficients &middot; estimates &plusmn;50% &middot; <button onClick="{{ goMethodology }}" style="font-family:inherit; font-size:inherit; letter-spacing:inherit; text-transform:inherit; background:transparent; border:none; color:#111110; text-decoration:underline; text-underline-offset:2px; cursor:pointer; padding:0;">See methodology</button><sc-if value="{{ isSample }}" hint-placeholder-val="{{ false }}"> &middot; <span style="border:1px solid #111110; padding:1px 6px; color:#111110;">SAMPLE DATA</span></sc-if></p>
+      </div>
+
+      <!-- Big 3 -->
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px,1fr)); border-top:2px solid #111110; border-bottom:2px solid #111110;">
+        <div style="padding:28px 24px 28px 0; display:flex; flex-direction:column; gap:8px;">
+          <span style="font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.18em; text-transform:uppercase;">(C) &mdash; Total carbon</span>
+          <span style="font-family:Anton,sans-serif; font-size:clamp(52px,5.4vw,88px); line-height:0.95;">{{ totCarbon }}</span>
+          <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.16em; text-transform:uppercase; color:#6E6B62;">g CO&#8322;e</span>
+          <div style="border-top:1px solid rgba(17,17,16,0.25); margin-top:10px; padding-top:12px; display:flex; flex-direction:column; gap:5px;">
+            <span style="font-size:13px; color:#3D3B36; font-weight:500;">&asymp; {{ carbonEq1 }}</span>
+            <span style="font-size:13px; color:#3D3B36; font-weight:500;">&asymp; {{ carbonEq2 }}</span>
+          </div>
+        </div>
+        <div style="padding:28px 24px; border-left:1px solid rgba(17,17,16,0.25); display:flex; flex-direction:column; gap:8px;">
+          <span style="font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.18em; text-transform:uppercase;">(W) &mdash; Total water</span>
+          <span style="font-family:Anton,sans-serif; font-size:clamp(52px,5.4vw,88px); line-height:0.95;">{{ totWater }}</span>
+          <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.16em; text-transform:uppercase; color:#6E6B62;">liters</span>
+          <div style="border-top:1px solid rgba(17,17,16,0.25); margin-top:10px; padding-top:12px; display:flex; flex-direction:column; gap:5px;">
+            <span style="font-size:13px; color:#3D3B36; font-weight:500;">&asymp; {{ waterEq1 }}</span>
+            <span style="font-size:13px; color:#3D3B36; font-weight:500;">&asymp; {{ waterEq2 }}</span>
+          </div>
+        </div>
+        <div style="padding:28px 0 28px 24px; border-left:1px solid rgba(17,17,16,0.25); display:flex; flex-direction:column; gap:8px;">
+          <span style="font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.18em; text-transform:uppercase;">(E) &mdash; Total energy</span>
+          <span style="font-family:Anton,sans-serif; font-size:clamp(52px,5.4vw,88px); line-height:0.95;">{{ totEnergy }}</span>
+          <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.16em; text-transform:uppercase; color:#6E6B62;">kWh</span>
+          <div style="border-top:1px solid rgba(17,17,16,0.25); margin-top:10px; padding-top:12px; display:flex; flex-direction:column; gap:5px;">
+            <span style="font-size:13px; color:#3D3B36; font-weight:500;">&asymp; {{ energyEq1 }}</span>
+            <span style="font-size:13px; color:#3D3B36; font-weight:500;">&asymp; {{ energyEq2 }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Fun facts band -->
+      <div style="background:#111110; color:#F1EFE9; padding:clamp(24px,3vw,40px); display:grid; grid-template-columns:repeat(auto-fit, minmax(210px,1fr)); gap:clamp(20px,3vw,36px);">
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <span style="font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:0.18em; opacity:0.5;">(F1)</span>
+          <span style="font-size:14px; line-height:1.5; font-weight:500;">{{ fact1 }}</span>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <span style="font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:0.18em; opacity:0.5;">(F2)</span>
+          <span style="font-size:14px; line-height:1.5; font-weight:500;">{{ fact2 }}</span>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <span style="font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:0.18em; opacity:0.5;">(F3)</span>
+          <span style="font-size:14px; line-height:1.5; font-weight:500;">{{ fact3 }}</span>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <span style="font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:0.18em; opacity:0.5;">(F4)</span>
+          <span style="font-size:14px; line-height:1.5; font-weight:500;">{{ fact4 }}</span>
+        </div>
+      </div>
+
+      <!-- Per conversation -->
+      <div>
+        <p style="font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.18em; text-transform:uppercase; margin:0 0 14px;">Average per conversation</p>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px,1fr)); border-top:1px solid rgba(17,17,16,0.25);">
+          <div style="padding:16px 16px 0 0;">
+            <span style="font-family:Anton,sans-serif; font-size:30px; display:block;">{{ perEnergy }}</span>
+            <span style="font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:0.16em; text-transform:uppercase; color:#6E6B62;">kWh per conversation</span>
+          </div>
+          <div style="padding:16px 16px 0 16px; border-left:1px solid rgba(17,17,16,0.25);">
+            <span style="font-family:Anton,sans-serif; font-size:30px; display:block;">{{ perWater }}</span>
+            <span style="font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:0.16em; text-transform:uppercase; color:#6E6B62;">liters per conversation</span>
+          </div>
+          <div style="padding:16px 0 0 16px; border-left:1px solid rgba(17,17,16,0.25);">
+            <span style="font-family:Anton,sans-serif; font-size:30px; display:block;">{{ perCarbon }}</span>
+            <span style="font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:0.16em; text-transform:uppercase; color:#6E6B62;">g CO&#8322; per conversation</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- In perspective -->
+      <div>
+        <p style="font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.18em; text-transform:uppercase; margin:0 0 4px; color:#6E6B62;">(03) &mdash; The full picture</p>
+        <h2 style="font-family:Anton,sans-serif; font-size:clamp(28px,3vw,42px); margin:0 0 20px; text-transform:uppercase;">In perspective</h2>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(150px,1fr)); gap:20px;">
+          <sc-for list="{{ badges }}" as="badge" hint-placeholder-count="6">
+            <div style="border-top:2px solid #111110; padding-top:12px;">
+              <span style="font-family:Anton,sans-serif; font-size:30px; display:block; line-height:1;">{{ badge.count }}</span>
+              <span style="font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:0.14em; text-transform:uppercase; color:#6E6B62; display:block; margin-top:6px;">{{ badge.title }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <!-- Monthly usage -->
+      <sc-if value="{{ hasChart }}" hint-placeholder-val="{{ false }}">
+        <div>
+          <h2 style="font-family:Anton,sans-serif; font-size:clamp(28px,3vw,42px); margin:0 0 6px; text-transform:uppercase;">Monthly usage</h2>
+          <p style="font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:0.16em; text-transform:uppercase; margin:0 0 20px; color:#6E6B62;">Tokens per month</p>
+          <div style="display:flex; align-items:flex-end; gap:clamp(4px,0.8vw,12px); height:220px; border-bottom:2px solid #111110;">
+            <sc-for list="{{ monthlyBars }}" as="bar" hint-placeholder-count="8">
+              <div title="{{ bar.title }}" style="flex:1; display:flex; flex-direction:column; justify-content:flex-end; height:100%;">
+                <div style="background:#111110; width:100%; height:{{ bar.pct }}%;"></div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display:flex; gap:clamp(4px,0.8vw,12px); margin-top:8px;">
+            <sc-for list="{{ monthlyBars }}" as="bar" hint-placeholder-count="8">
+              <span style="flex:1; font-family:'IBM Plex Mono',monospace; font-size:8.5px; letter-spacing:0.08em; text-transform:uppercase; text-align:center; color:#6E6B62; white-space:nowrap; overflow:hidden;">{{ bar.label }}</span>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- Token distribution -->
+      <div>
+        <h2 style="font-family:Anton,sans-serif; font-size:clamp(28px,3vw,42px); margin:0 0 20px; text-transform:uppercase;">Token distribution</h2>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(240px,1fr)); gap:24px; margin-bottom:24px;">
+          <div style="border-top:1px solid rgba(17,17,16,0.25); padding-top:14px;">
+            <span style="font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.16em; text-transform:uppercase;">&#9632; Your prompts (input)</span>
+            <span style="font-family:Anton,sans-serif; font-size:38px; display:block; margin-top:8px;">{{ inTok }}</span>
+            <span style="font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:0.14em; text-transform:uppercase; color:#6E6B62;">{{ inPct }}% of tokens &middot; {{ inEnergyNote }}</span>
+          </div>
+          <div style="border-top:1px solid rgba(17,17,16,0.25); padding-top:14px;">
+            <span style="font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.16em; text-transform:uppercase;">&#9633; AI replies (output)</span>
+            <span style="font-family:Anton,sans-serif; font-size:38px; display:block; margin-top:8px;">{{ outTok }}</span>
+            <span style="font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:0.14em; text-transform:uppercase; color:#6E6B62;">{{ outPct }}% of tokens &middot; {{ outEnergyNote }}</span>
+          </div>
+        </div>
+        <p style="font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:0.16em; text-transform:uppercase; margin:0 0 8px; color:#6E6B62;">Token ratio</p>
+        <div style="height:20px; border:2px solid #111110; display:flex; overflow:hidden;">
+          <div style="background:#111110; width:{{ inPct }}%;"></div>
+          <div style="flex:1; background:repeating-linear-gradient(45deg, #111110 0px, #111110 3px, transparent 3px, transparent 8px);"></div>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-top:6px;">
+          <span style="font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:0.14em; text-transform:uppercase;">&#9632; Input &middot; {{ inPct }}%</span>
+          <span style="font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:0.14em; text-transform:uppercase;">&#9636; Output &middot; {{ outPct }}%</span>
+        </div>
+        <sc-if value="{{ notMixed }}" hint-placeholder-val="{{ false }}">
+          <p style="font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:0.16em; text-transform:uppercase; margin:20px 0 8px; color:#6E6B62;">Energy contribution</p>
+          <div style="height:20px; border:2px solid #111110; display:flex; overflow:hidden;">
+            <div style="background:#111110; width:{{ inEnergyPct }}%;"></div>
+            <div style="flex:1; background:repeating-linear-gradient(45deg, #111110 0px, #111110 3px, transparent 3px, transparent 8px);"></div>
+          </div>
+          <div style="display:flex; justify-content:space-between; margin-top:6px;">
+            <span style="font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:0.14em; text-transform:uppercase;">&#9632; Input &middot; {{ inEnergyPct }}%</span>
+            <span style="font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:0.14em; text-transform:uppercase;">&#9636; Output &middot; {{ outEnergyPct }}%</span>
+          </div>
+        </sc-if>
+        <p style="font-size:13px; color:#3D3B36; margin:16px 0 0; max-width:640px; line-height:1.5; font-weight:500;">Output tokens cost ~3&times; more energy than input tokens (autoregressive generation vs. single forward pass).{{ mixedNote }}</p>
+      </div>
+
+      <!-- Projection -->
+      <div style="border:2px solid #111110; padding:clamp(20px,3vw,36px);">
+        <p style="font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.18em; text-transform:uppercase; margin:0 0 4px; color:#6E6B62;">(04) &mdash; What if you keep going?</p>
+        <h2 style="font-family:Anton,sans-serif; font-size:clamp(28px,3vw,42px); margin:0 0 24px; text-transform:uppercase;">Annual projection</h2>
+        <div style="display:flex; align-items:center; gap:20px; flex-wrap:wrap; margin-bottom:28px;">
+          <div style="display:flex; align-items:baseline; gap:10px;">
+            <span style="font-family:Anton,sans-serif; font-size:56px; line-height:1;">{{ daily }}</span>
+            <span style="font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:0.16em; text-transform:uppercase; color:#6E6B62;">convos / day</span>
+          </div>
+          <input type="range" min="1" max="50" value="{{ daily }}" onChange="{{ onDaily }}" aria-label="Daily conversations" style="flex:1; min-width:140px; height:4px; cursor:pointer;">
+          <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.12em; border:1px solid #111110; padding:6px 12px;">{{ annualLabel }} / YR</span>
+        </div>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px,1fr)); gap:0; border-top:1px solid rgba(17,17,16,0.25);">
+          <div style="padding:16px 16px 0 0;">
+            <span style="font-family:Anton,sans-serif; font-size:28px; display:block;">{{ projEnergy }}</span>
+            <span style="font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:0.16em; text-transform:uppercase; color:#6E6B62;">kWh energy</span>
+          </div>
+          <div style="padding:16px 16px 0 16px; border-left:1px solid rgba(17,17,16,0.25);">
+            <span style="font-family:Anton,sans-serif; font-size:28px; display:block;">{{ projWater }}</span>
+            <span style="font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:0.16em; text-transform:uppercase; color:#6E6B62;">liters water</span>
+          </div>
+          <div style="padding:16px 0 0 16px; border-left:1px solid rgba(17,17,16,0.25);">
+            <span style="font-family:Anton,sans-serif; font-size:28px; display:block;">{{ projCarbon }}</span>
+            <span style="font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:0.16em; text-transform:uppercase; color:#6E6B62;">g CO&#8322; carbon</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- CTA -->
+      <div style="background:#111110; color:#F1EFE9; padding:clamp(28px,4vw,48px); display:flex; align-items:center; justify-content:space-between; gap:24px; flex-wrap:wrap;">
+        <div>
+          <h2 style="font-family:Anton,sans-serif; font-size:clamp(28px,3.4vw,48px); margin:0; text-transform:uppercase; line-height:1;">Awareness is<br>the first step.</h2>
+          <p style="font-size:13.5px; margin:14px 0 0; color:rgba(241,239,233,0.6); max-width:420px; line-height:1.5; font-weight:500;">Explore tips to reduce your footprint and understand the methodology behind these numbers.</p>
+        </div>
+        <div style="display:flex; gap:14px; flex-wrap:wrap;">
+          <button onClick="{{ goInsights }}" style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.14em; text-transform:uppercase; background:#F1EFE9; color:#111110; border:2px solid #F1EFE9; padding:14px 22px; cursor:pointer; font-weight:600;" style-hover="background:transparent; color:#F1EFE9;">Reduce my impact &rarr;</button>
+          <button onClick="{{ goMethodology }}" style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.14em; text-transform:uppercase; background:transparent; color:#F1EFE9; border:2px solid rgba(241,239,233,0.4); padding:14px 22px; cursor:pointer; font-weight:600;" style-hover="border-color:#F1EFE9;">Methodology</button>
+        </div>
+      </div>
+    </section>
+  </sc-if>
+
+  <!-- ══ BREAKDOWN ════════════════════════════════════════════ -->
+  <sc-if value="{{ showBreakdown }}" hint-placeholder-val="{{ false }}">
+    <section data-screen-label="Breakdown" style="max-width:1280px; width:100%; margin:0 auto; padding:clamp(24px,4vw,56px) clamp(16px,3vw,40px) 64px; box-sizing:border-box; display:flex; flex-direction:column; gap:24px; animation:fadeUp 0.5s ease both;">
+      <div>
+        <h1 style="font-family:Anton,sans-serif; font-size:clamp(48px,7vw,96px); margin:0; text-transform:uppercase; line-height:0.95;">Breakdown</h1>
+        <p style="font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.14em; text-transform:uppercase; margin:14px 0 0; color:#6E6B62;">{{ filteredCount }} conversations &middot; sorted by impact &middot; click a row to inspect</p>
+      </div>
+
+      <div style="display:flex; align-items:center; gap:12px; border:2px solid #111110; padding:12px 16px;">
+        <span style="font-family:'IBM Plex Mono',monospace; font-size:12px;">&#8981;</span>
+        <input type="text" placeholder="SEARCH CONVERSATIONS..." value="{{ search }}" onChange="{{ onSearch }}" style="flex:1; background:transparent; border:none; outline:none; font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.08em; color:#111110;">
+        <sc-if value="{{ hasSearch }}" hint-placeholder-val="{{ false }}">
+          <button onClick="{{ clearSearch }}" style="font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:0.16em; text-transform:uppercase; background:transparent; border:none; color:#111110; text-decoration:underline; cursor:pointer;">Clear</button>
+        </sc-if>
+      </div>
+
+      <div style="border-top:2px solid #111110;">
+        <!-- header row -->
+        <div style="display:grid; grid-template-columns:minmax(0,2.4fr) repeat(4, minmax(0,1fr)) minmax(0,0.6fr); gap:8px; padding:12px 0; border-bottom:2px solid #111110;">
+          <span style="font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:0.16em; text-transform:uppercase; font-weight:600;">Conversation</span>
+          <sc-for list="{{ sortCols }}" as="col" hint-placeholder-count="5">
+            <button onClick="{{ col.onSort }}" style="font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:0.16em; text-transform:uppercase; font-weight:600; background:transparent; border:none; color:#111110; cursor:pointer; text-align:right; padding:0;" style-hover="text-decoration:underline;">{{ col.label }} {{ col.arrow }}</button>
+          </sc-for>
+        </div>
+        <!-- rows -->
+        <sc-for list="{{ pageRows }}" as="row" hint-placeholder-count="10">
+          <div>
+            <div onClick="{{ row.onClick }}" role="button" tabindex="0" style="display:grid; grid-template-columns:minmax(0,2.4fr) repeat(4, minmax(0,1fr)) minmax(0,0.6fr); gap:8px; padding:14px 0; border-bottom:1px solid rgba(17,17,16,0.18); cursor:pointer; align-items:center; background:{{ row.bg }};" style-hover="background:#E7E4DC;">
+              <div style="min-width:0; padding-left:6px;">
+                <p style="margin:0; font-size:14px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ row.marker }}<span style="font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:0.08em; color:#6E6B62;">{{ row.srcTag }}</span> {{ row.title }}</p>
+                <p style="margin:3px 0 0; font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:0.1em; color:#6E6B62; text-transform:uppercase;">{{ row.dateLabel }}</p>
+              </div>
+              <span style="font-family:'IBM Plex Mono',monospace; font-size:11.5px; text-align:right;">{{ row.tokens }}</span>
+              <span style="font-family:'IBM Plex Mono',monospace; font-size:11.5px; text-align:right;">{{ row.energy }}</span>
+              <span style="font-family:'IBM Plex Mono',monospace; font-size:11.5px; text-align:right;">{{ row.water }}</span>
+              <span style="font-family:'IBM Plex Mono',monospace; font-size:11.5px; text-align:right;">{{ row.carbon }}</span>
+              <span style="font-family:'IBM Plex Mono',monospace; font-size:11.5px; text-align:right;">{{ row.msgs }}</span>
+            </div>
+            <sc-if value="{{ row.isSelected }}" hint-placeholder-val="{{ false }}">
+              <div style="background:#111110; color:#F1EFE9; padding:20px clamp(16px,2vw,28px); display:grid; grid-template-columns:repeat(auto-fit, minmax(140px,1fr)); gap:18px;">
+                <div>
+                  <span style="font-family:'IBM Plex Mono',monospace; font-size:8.5px; letter-spacing:0.16em; text-transform:uppercase; opacity:0.5; display:block; margin-bottom:6px;">Input tokens</span>
+                  <span style="font-family:Anton,sans-serif; font-size:24px;">{{ row.inTok }}</span>
+                </div>
+                <div>
+                  <span style="font-family:'IBM Plex Mono',monospace; font-size:8.5px; letter-spacing:0.16em; text-transform:uppercase; opacity:0.5; display:block; margin-bottom:6px;">Output tokens</span>
+                  <span style="font-family:Anton,sans-serif; font-size:24px;">{{ row.outTok }}</span>
+                </div>
+                <div>
+                  <span style="font-family:'IBM Plex Mono',monospace; font-size:8.5px; letter-spacing:0.16em; text-transform:uppercase; opacity:0.5; display:block; margin-bottom:6px;">Energy kWh</span>
+                  <span style="font-family:Anton,sans-serif; font-size:24px;">{{ row.energy }}</span>
+                </div>
+                <div>
+                  <span style="font-family:'IBM Plex Mono',monospace; font-size:8.5px; letter-spacing:0.16em; text-transform:uppercase; opacity:0.5; display:block; margin-bottom:6px;">Water L</span>
+                  <span style="font-family:Anton,sans-serif; font-size:24px;">{{ row.water }}</span>
+                </div>
+                <div>
+                  <span style="font-family:'IBM Plex Mono',monospace; font-size:8.5px; letter-spacing:0.16em; text-transform:uppercase; opacity:0.5; display:block; margin-bottom:6px;">Share of total</span>
+                  <span style="font-family:Anton,sans-serif; font-size:24px;">{{ row.share }}%</span>
+                </div>
+              </div>
+            </sc-if>
+          </div>
+        </sc-for>
+      </div>
+
+      <sc-if value="{{ hasPages }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+          <button onClick="{{ prevPage }}" disabled="{{ prevDisabled }}" style="font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.16em; text-transform:uppercase; background:transparent; border:1px solid #111110; color:#111110; padding:9px 16px; cursor:pointer;" style-hover="background:#111110; color:#F1EFE9;">&larr; Prev</button>
+          <span style="font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.16em; text-transform:uppercase; color:#6E6B62;">{{ pageLabel }}</span>
+          <button onClick="{{ nextPage }}" disabled="{{ nextDisabled }}" style="font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.16em; text-transform:uppercase; background:transparent; border:1px solid #111110; color:#111110; padding:9px 16px; cursor:pointer;" style-hover="background:#111110; color:#F1EFE9;">Next &rarr;</button>
+        </div>
+      </sc-if>
+
+      <p style="font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:0.14em; text-transform:uppercase; margin:0; color:#6E6B62;">&#9632; = Top 5 impact &nbsp;&middot;&nbsp; [C] Claude &nbsp;[GPT] ChatGPT</p>
+    </section>
+  </sc-if>
+
+  <!-- ══ INSIGHTS ═════════════════════════════════════════════ -->
+  <sc-if value="{{ showInsights }}" hint-placeholder-val="{{ false }}">
+    <section data-screen-label="Insights" style="max-width:1280px; width:100%; margin:0 auto; padding:clamp(24px,4vw,56px) clamp(16px,3vw,40px) 64px; box-sizing:border-box; display:flex; flex-direction:column; gap:clamp(32px,4vw,56px); animation:fadeUp 0.5s ease both;">
+      <div>
+        <h1 style="font-family:Anton,sans-serif; font-size:clamp(48px,7vw,96px); margin:0; text-transform:uppercase; line-height:0.95;">Insights</h1>
+        <p style="font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.14em; text-transform:uppercase; margin:14px 0 0; color:#6E6B62;">Patterns, trends, and tips from {{ convoCount }} conversations</p>
+      </div>
+
+      <!-- Usage DNA -->
+      <div>
+        <p style="font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.18em; text-transform:uppercase; margin:0 0 16px;">(01) &mdash; Your usage DNA</p>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px,1fr)); gap:20px;">
+          <sc-for list="{{ statCards }}" as="card" hint-placeholder-count="4">
+            <div style="border-top:2px solid #111110; padding-top:14px;">
+              <span style="font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:0.16em; text-transform:uppercase; color:#6E6B62; display:block;">{{ card.label }}</span>
+              <span style="font-family:Anton,sans-serif; font-size:clamp(28px,2.6vw,38px); display:block; margin-top:8px; line-height:1;">{{ card.value }}</span>
+              <span style="font-size:12.5px; color:#3D3B36; display:block; margin-top:8px; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ card.sub }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <!-- Trends -->
+      <sc-if value="{{ hasTrends }}" hint-placeholder-val="{{ false }}">
+        <div>
+          <p style="font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.18em; text-transform:uppercase; margin:0 0 16px;">(02) &mdash; Month-over-month trends</p>
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px,1fr)); gap:20px;">
+            <sc-for list="{{ trends }}" as="t" hint-placeholder-count="3">
+              <div style="border:2px solid #111110; padding:20px;">
+                <span style="font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:0.16em; text-transform:uppercase; color:#6E6B62; display:block; margin-bottom:10px;">{{ t.label }}</span>
+                <span style="font-family:Anton,sans-serif; font-size:36px; line-height:1;">{{ t.arrow }} {{ t.pctLabel }}</span>
+                <p style="font-size:12.5px; color:#3D3B36; margin:10px 0 0; line-height:1.5; font-weight:500;">{{ t.description }}</p>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- Perspective -->
+      <div>
+        <p style="font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.18em; text-transform:uppercase; margin:0 0 16px;">(03) &mdash; Your impact in perspective</p>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(150px,1fr)); gap:20px;">
+          <sc-for list="{{ badges }}" as="badge" hint-placeholder-count="6">
+            <div style="border-top:2px solid #111110; padding-top:12px;">
+              <span style="font-family:Anton,sans-serif; font-size:30px; display:block; line-height:1;">{{ badge.count }}</span>
+              <span style="font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:0.14em; text-transform:uppercase; color:#6E6B62; display:block; margin-top:6px;">{{ badge.title }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <!-- Tips -->
+      <div>
+        <p style="font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.18em; text-transform:uppercase; margin:0 0 4px;">(04) &mdash; Reduce your footprint</p>
+        <p style="font-size:13px; color:#6E6B62; margin:0 0 8px; font-weight:500;">Personalized tips based on your usage patterns</p>
+        <div style="border-top:2px solid #111110;">
+          <sc-for list="{{ tips }}" as="tip" hint-placeholder-count="5">
+            <div style="display:grid; grid-template-columns:56px minmax(0,1fr) auto; gap:16px; padding:18px 0; border-bottom:1px solid rgba(17,17,16,0.18); align-items:baseline;">
+              <span style="font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.12em; color:#6E6B62;">{{ tip.idx }}</span>
+              <div>
+                <p style="margin:0; font-size:15px; font-weight:700;">{{ tip.title }}</p>
+                <p style="margin:5px 0 0; font-size:13.5px; color:#3D3B36; line-height:1.5; font-weight:500; max-width:640px;">{{ tip.description }}</p>
+              </div>
+              <span style="font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:0.14em; text-transform:uppercase; color:#6E6B62;">{{ tip.tag }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <!-- Bigger picture -->
+      <div style="background:#111110; color:#F1EFE9; padding:clamp(28px,4vw,48px);">
+        <h2 style="font-family:Anton,sans-serif; font-size:clamp(28px,3.4vw,48px); margin:0 0 20px; text-transform:uppercase;">The bigger picture</h2>
+        <div style="border:1px solid rgba(241,239,233,0.3); padding:18px 20px; margin-bottom:20px;">
+          <p style="font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:0.18em; text-transform:uppercase; margin:0 0 8px; opacity:0.55;">Did you know?</p>
+          <p style="font-size:14.5px; margin:0; line-height:1.55; font-weight:500;">{{ didYouKnow }}</p>
+        </div>
+        <p style="font-size:13.5px; color:rgba(241,239,233,0.65); margin:0 0 24px; max-width:640px; line-height:1.6; font-weight:500;">While individual AI usage may seem small, awareness is the first step toward more sustainable practices. By understanding your footprint, you can make more informed choices about when and how you use AI tools.</p>
+        <div style="display:flex; gap:14px; flex-wrap:wrap;">
+          <button onClick="{{ goMethodology }}" style="font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.14em; text-transform:uppercase; background:#F1EFE9; color:#111110; border:2px solid #F1EFE9; padding:12px 20px; cursor:pointer; font-weight:600;" style-hover="background:transparent; color:#F1EFE9;">See methodology &rarr;</button>
+          <button onClick="{{ goAbout }}" style="font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.14em; text-transform:uppercase; background:transparent; color:#F1EFE9; border:2px solid rgba(241,239,233,0.4); padding:12px 20px; cursor:pointer; font-weight:600;" style-hover="border-color:#F1EFE9;">About OpenH2O</button>
+        </div>
+      </div>
+    </section>
+  </sc-if>
+
+  <!-- ══ METHODOLOGY ══════════════════════════════════════════ -->
+  <sc-if value="{{ isMethodology }}" hint-placeholder-val="{{ false }}">
+    <section data-screen-label="Methodology" style="max-width:1080px; width:100%; margin:0 auto; padding:clamp(24px,4vw,56px) clamp(16px,3vw,40px) 64px; box-sizing:border-box; display:flex; flex-direction:column; gap:clamp(32px,4vw,52px); animation:fadeUp 0.5s ease both;">
+      <div>
+        <h1 style="font-family:Anton,sans-serif; font-size:clamp(48px,7vw,96px); margin:0; text-transform:uppercase; line-height:0.95;">Methodology</h1>
+        <p style="font-size:15px; color:#3D3B36; margin:14px 0 0; font-weight:500;">How we calculate your AI environmental impact</p>
+        <p style="font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:0.14em; text-transform:uppercase; margin:8px 0 0; color:#6E6B62;">Claude coefficients v1.1 &middot; GPT coefficients v1.0 &middot; Last updated March 2026</p>
+      </div>
+
+      <div style="border:2px solid #111110; padding:22px 24px; display:flex; gap:18px; align-items:flex-start;">
+        <span style="font-family:Anton,sans-serif; font-size:34px; line-height:1;">(!)</span>
+        <div>
+          <p style="font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.16em; text-transform:uppercase; margin:0 0 8px; font-weight:600;">Important disclaimer</p>
+          <p style="font-size:13.5px; margin:0; color:#3D3B36; line-height:1.6; font-weight:500;">These calculations are estimates (&plusmn;50%) based on publicly available research and industry averages. Actual environmental impact varies based on data center location, energy grid composition, hardware efficiency, and model architecture. We aim for reasonable approximations, not precise measurements.</p>
+        </div>
+      </div>
+
+      <div style="border-top:1px solid rgba(17,17,16,0.25); padding-top:20px;">
+        <p style="font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.16em; text-transform:uppercase; margin:0 0 8px; font-weight:600;">Multi-provider support</p>
+        <p style="font-size:13.5px; margin:0; color:#3D3B36; line-height:1.6; font-weight:500; max-width:760px;">OpenH2O supports both Claude and ChatGPT conversation exports. Each provider uses model-specific energy coefficients &mdash; GPT-5 consumes significantly more energy per token than Claude Sonnet 4.6 due to its larger model size. Infrastructure values (PUE, water, carbon grid intensity) are shared since they depend on data center, not model architecture.</p>
+      </div>
+
+      <!-- Pipeline -->
+      <div>
+        <h2 style="font-family:Anton,sans-serif; font-size:clamp(28px,3vw,42px); margin:0 0 24px; text-transform:uppercase;">Calculation pipeline</h2>
+        <div style="display:flex; flex-direction:column; gap:0; border-top:2px solid #111110;">
+          <div style="display:grid; grid-template-columns:clamp(60px,8vw,110px) minmax(0,1fr); gap:clamp(14px,3vw,32px); padding:24px 0; border-bottom:1px solid rgba(17,17,16,0.18);">
+            <span style="font-family:Anton,sans-serif; font-size:clamp(40px,5vw,72px); line-height:0.9; color:transparent; -webkit-text-stroke:2px #111110;">01</span>
+            <div>
+              <p style="margin:0; font-size:16px; font-weight:700;">Token counting</p>
+              <p style="margin:6px 0 0; font-size:13.5px; color:#3D3B36; line-height:1.6; font-weight:500;">Messages are tokenized using a GPT-4 compatible BPE tokenizer (gpt-tokenizer). Human/user messages count as input tokens; assistant messages count as output tokens. All messages per role are joined, then tokenized once per conversation.</p>
+              <pre style="font-family:'IBM Plex Mono',monospace; font-size:11.5px; background:#E7E4DC; border-left:2px solid #111110; padding:14px 16px; margin:12px 0 0; overflow-x:auto; line-height:1.7;">inputTokens = encode(humanMessages.join(" ")).length
+outputTokens = encode(assistantMessages.join(" ")).length</pre>
+            </div>
+          </div>
+          <div style="display:grid; grid-template-columns:clamp(60px,8vw,110px) minmax(0,1fr); gap:clamp(14px,3vw,32px); padding:24px 0; border-bottom:1px solid rgba(17,17,16,0.18);">
+            <span style="font-family:Anton,sans-serif; font-size:clamp(40px,5vw,72px); line-height:0.9; color:transparent; -webkit-text-stroke:2px #111110;">02</span>
+            <div>
+              <p style="margin:0; font-size:16px; font-weight:700;">Raw energy (Wh)</p>
+              <p style="margin:6px 0 0; font-size:13.5px; color:#3D3B36; line-height:1.6; font-weight:500;">Energy per token depends on the model. Claude: input=0.0000039 Wh, output=0.000195 Wh. GPT-5: input=0.00008 Wh, output=0.004 Wh.</p>
+              <pre style="font-family:'IBM Plex Mono',monospace; font-size:11.5px; background:#E7E4DC; border-left:2px solid #111110; padding:14px 16px; margin:12px 0 0; overflow-x:auto; line-height:1.7;">rawEnergy_wh = (inputTokens &times; energy_per_input)
+             + (outputTokens &times; energy_per_output)</pre>
+            </div>
+          </div>
+          <div style="display:grid; grid-template-columns:clamp(60px,8vw,110px) minmax(0,1fr); gap:clamp(14px,3vw,32px); padding:24px 0; border-bottom:1px solid rgba(17,17,16,0.18);">
+            <span style="font-family:Anton,sans-serif; font-size:clamp(40px,5vw,72px); line-height:0.9; color:transparent; -webkit-text-stroke:2px #111110;">03</span>
+            <div>
+              <p style="margin:0; font-size:16px; font-weight:700;">Total energy (kWh)</p>
+              <p style="margin:6px 0 0; font-size:13.5px; color:#3D3B36; line-height:1.6; font-weight:500;">A Power Usage Effectiveness (PUE) multiplier of 1.2 accounts for data center cooling, lighting, and networking overhead. The result is converted from Wh to kWh.</p>
+              <pre style="font-family:'IBM Plex Mono',monospace; font-size:11.5px; background:#E7E4DC; border-left:2px solid #111110; padding:14px 16px; margin:12px 0 0; overflow-x:auto; line-height:1.7;">totalEnergy_wh = rawEnergy_wh &times; 1.2
+totalEnergy_kwh = totalEnergy_wh / 1000</pre>
+            </div>
+          </div>
+          <div style="display:grid; grid-template-columns:clamp(60px,8vw,110px) minmax(0,1fr); gap:clamp(14px,3vw,32px); padding:24px 0; border-bottom:1px solid rgba(17,17,16,0.18);">
+            <span style="font-family:Anton,sans-serif; font-size:clamp(40px,5vw,72px); line-height:0.9; color:transparent; -webkit-text-stroke:2px #111110;">04</span>
+            <div>
+              <p style="margin:0; font-size:16px; font-weight:700;">Water &amp; carbon</p>
+              <p style="margin:6px 0 0; font-size:13.5px; color:#3D3B36; line-height:1.6; font-weight:500;">Water usage combines direct cooling (1.9 L/kWh) and indirect water from electricity generation (4.5 L/kWh) = 6.4 L/kWh total. Carbon uses US average grid intensity of 340 g CO&#8322;e/kWh.</p>
+              <pre style="font-family:'IBM Plex Mono',monospace; font-size:11.5px; background:#E7E4DC; border-left:2px solid #111110; padding:14px 16px; margin:12px 0 0; overflow-x:auto; line-height:1.7;">water_liters = totalEnergy_kwh &times; 6.4
+carbon_gco2e = totalEnergy_kwh &times; 340</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Coefficients -->
+      <div>
+        <h2 style="font-family:Anton,sans-serif; font-size:clamp(28px,3vw,42px); margin:0 0 24px; text-transform:uppercase;">Coefficients used</h2>
+
+        <p style="font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.16em; text-transform:uppercase; margin:0 0 12px; font-weight:600;">&#9632; Claude Sonnet 4.6 <span style="color:#6E6B62;">(v1.1)</span></p>
+        <div style="border-top:2px solid #111110; margin-bottom:36px; overflow-x:auto;">
+          <div style="display:grid; grid-template-columns:minmax(150px,1.3fr) minmax(90px,0.8fr) minmax(180px,1.6fr); gap:10px; padding:10px 0; border-bottom:1px solid rgba(17,17,16,0.18); font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:0.16em; text-transform:uppercase; color:#6E6B62;"><span>Parameter</span><span>Value</span><span>Source</span></div>
+          <div style="display:grid; grid-template-columns:minmax(150px,1.3fr) minmax(90px,0.8fr) minmax(180px,1.6fr); gap:10px; padding:12px 0; border-bottom:1px solid rgba(17,17,16,0.18); font-size:13px;"><span style="font-weight:600;">Energy per input token</span><span style="font-family:'IBM Plex Mono',monospace; font-size:12px;">0.0000039 Wh</span><span style="font-size:11.5px; color:#6E6B62; font-weight:500;">Luccioni et al. 2023; 2024 US Data Center Energy Report</span></div>
+          <div style="display:grid; grid-template-columns:minmax(150px,1.3fr) minmax(90px,0.8fr) minmax(180px,1.6fr); gap:10px; padding:12px 0; border-bottom:1px solid rgba(17,17,16,0.18); font-size:13px;"><span style="font-weight:600;">Energy per output token</span><span style="font-family:'IBM Plex Mono',monospace; font-size:12px;">0.000195 Wh</span><span style="font-size:11.5px; color:#6E6B62; font-weight:500;">Luccioni et al. 2023; 2024 US Data Center Energy Report</span></div>
+          <div style="display:grid; grid-template-columns:minmax(150px,1.3fr) minmax(90px,0.8fr) minmax(180px,1.6fr); gap:10px; padding:12px 0; border-bottom:1px solid rgba(17,17,16,0.18); font-size:13px;"><span style="font-weight:600;">PUE (Power Usage Effectiveness)</span><span style="font-family:'IBM Plex Mono',monospace; font-size:12px;">1.2</span><span style="font-size:11.5px; color:#6E6B62; font-weight:500;">Anthropic datacenter estimate; industry avg 1.1&ndash;1.5</span></div>
+          <div style="display:grid; grid-template-columns:minmax(150px,1.3fr) minmax(90px,0.8fr) minmax(180px,1.6fr); gap:10px; padding:12px 0; border-bottom:1px solid rgba(17,17,16,0.18); font-size:13px;"><span style="font-weight:600;">Direct water per kWh</span><span style="font-family:'IBM Plex Mono',monospace; font-size:12px;">1.9 L</span><span style="font-size:11.5px; color:#6E6B62; font-weight:500;">EESI 2024, direct cooling: 1,900 L/MWh</span></div>
+          <div style="display:grid; grid-template-columns:minmax(150px,1.3fr) minmax(90px,0.8fr) minmax(180px,1.6fr); gap:10px; padding:12px 0; border-bottom:1px solid rgba(17,17,16,0.18); font-size:13px;"><span style="font-weight:600;">Indirect water per kWh</span><span style="font-family:'IBM Plex Mono',monospace; font-size:12px;">4.5 L</span><span style="font-size:11.5px; color:#6E6B62; font-weight:500;">2024 US Data Center Energy Usage Report</span></div>
+          <div style="display:grid; grid-template-columns:minmax(150px,1.3fr) minmax(90px,0.8fr) minmax(180px,1.6fr); gap:10px; padding:12px 0; border-bottom:1px solid rgba(17,17,16,0.18); font-size:13px;"><span style="font-weight:600;">Carbon per kWh</span><span style="font-family:'IBM Plex Mono',monospace; font-size:12px;">340 g CO&#8322;e</span><span style="font-size:11.5px; color:#6E6B62; font-weight:500;">EPA eGRID 2023, US national average</span></div>
+        </div>
+
+        <p style="font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.16em; text-transform:uppercase; margin:0 0 12px; font-weight:600;">&#9633; GPT-5 <span style="color:#6E6B62;">(v1.0)</span> <span style="border:1px solid #111110; padding:2px 8px; margin-left:8px;">Experimental estimates</span></p>
+        <div style="border-top:2px solid #111110; overflow-x:auto;">
+          <div style="display:grid; grid-template-columns:minmax(150px,1.3fr) minmax(90px,0.8fr) minmax(180px,1.6fr); gap:10px; padding:10px 0; border-bottom:1px solid rgba(17,17,16,0.18); font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:0.16em; text-transform:uppercase; color:#6E6B62;"><span>Parameter</span><span>Value</span><span>Source</span></div>
+          <div style="display:grid; grid-template-columns:minmax(150px,1.3fr) minmax(90px,0.8fr) minmax(180px,1.6fr); gap:10px; padding:12px 0; border-bottom:1px solid rgba(17,17,16,0.18); font-size:13px;"><span style="font-weight:600;">Energy per input token</span><span style="font-family:'IBM Plex Mono',monospace; font-size:12px;">0.00008 Wh</span><span style="font-size:11.5px; color:#6E6B62; font-weight:500;">Epoch AI (2025); Tom's Hardware (2025)</span></div>
+          <div style="display:grid; grid-template-columns:minmax(150px,1.3fr) minmax(90px,0.8fr) minmax(180px,1.6fr); gap:10px; padding:12px 0; border-bottom:1px solid rgba(17,17,16,0.18); font-size:13px;"><span style="font-weight:600;">Energy per output token</span><span style="font-family:'IBM Plex Mono',monospace; font-size:12px;">0.004 Wh</span><span style="font-size:11.5px; color:#6E6B62; font-weight:500;">Epoch AI (2025); Tom's Hardware (2025)</span></div>
+          <div style="display:grid; grid-template-columns:minmax(150px,1.3fr) minmax(90px,0.8fr) minmax(180px,1.6fr); gap:10px; padding:12px 0; border-bottom:1px solid rgba(17,17,16,0.18); font-size:13px;"><span style="font-weight:600;">PUE / water / carbon</span><span style="font-family:'IBM Plex Mono',monospace; font-size:12px;">shared</span><span style="font-size:11.5px; color:#6E6B62; font-weight:500;">Same as Claude &mdash; infrastructure-dependent, not model-dependent</span></div>
+        </div>
+        <p style="font-size:12px; color:#6E6B62; margin:12px 0 0; line-height:1.6; font-weight:500; max-width:720px;">GPT-5 energy values are based on early research estimates (Epoch AI, Tom's Hardware) and carry higher uncertainty than Claude coefficients. These will be updated as more data becomes available.</p>
+      </div>
+
+      <!-- Comparisons -->
+      <div>
+        <h2 style="font-family:Anton,sans-serif; font-size:clamp(28px,3vw,42px); margin:0 0 24px; text-transform:uppercase;">Real-world comparisons</h2>
+        <div style="border-top:2px solid #111110; overflow-x:auto;">
+          <div style="display:grid; grid-template-columns:minmax(120px,1fr) minmax(150px,1.2fr) minmax(150px,1.2fr); gap:10px; padding:10px 0; border-bottom:1px solid rgba(17,17,16,0.18); font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:0.16em; text-transform:uppercase; color:#6E6B62;"><span>Metric</span><span>Comparison</span><span>Formula</span></div>
+          <div style="display:grid; grid-template-columns:minmax(120px,1fr) minmax(150px,1.2fr) minmax(150px,1.2fr); gap:10px; padding:12px 0; border-bottom:1px solid rgba(17,17,16,0.18); font-size:13px;"><span style="font-weight:500;">Carbon (g CO&#8322;e)</span><span style="font-weight:600;">Miles driven (gas car)</span><span style="font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:#6E6B62;">&divide; 404 g CO&#8322;e/mile (EPA 2023)</span></div>
+          <div style="display:grid; grid-template-columns:minmax(120px,1fr) minmax(150px,1.2fr) minmax(150px,1.2fr); gap:10px; padding:12px 0; border-bottom:1px solid rgba(17,17,16,0.18); font-size:13px;"><span style="font-weight:500;">Carbon (g CO&#8322;e)</span><span style="font-weight:600;">Smartphone charges</span><span style="font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:#6E6B62;">&divide; 8.22 g CO&#8322;e/charge</span></div>
+          <div style="display:grid; grid-template-columns:minmax(120px,1fr) minmax(150px,1.2fr) minmax(150px,1.2fr); gap:10px; padding:12px 0; border-bottom:1px solid rgba(17,17,16,0.18); font-size:13px;"><span style="font-weight:500;">Water (liters)</span><span style="font-weight:600;">Water bottles (500 mL)</span><span style="font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:#6E6B62;">&divide; 0.5</span></div>
+          <div style="display:grid; grid-template-columns:minmax(120px,1fr) minmax(150px,1.2fr) minmax(150px,1.2fr); gap:10px; padding:12px 0; border-bottom:1px solid rgba(17,17,16,0.18); font-size:13px;"><span style="font-weight:500;">Water (liters)</span><span style="font-weight:600;">Minutes of shower</span><span style="font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:#6E6B62;">&divide; 8 liters/min</span></div>
+          <div style="display:grid; grid-template-columns:minmax(120px,1fr) minmax(150px,1.2fr) minmax(150px,1.2fr); gap:10px; padding:12px 0; border-bottom:1px solid rgba(17,17,16,0.18); font-size:13px;"><span style="font-weight:500;">Energy (kWh)</span><span style="font-weight:600;">LED bulb hours</span><span style="font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:#6E6B62;">&divide; 0.01 kWh/hr (10W LED)</span></div>
+          <div style="display:grid; grid-template-columns:minmax(120px,1fr) minmax(150px,1.2fr) minmax(150px,1.2fr); gap:10px; padding:12px 0; border-bottom:1px solid rgba(17,17,16,0.18); font-size:13px;"><span style="font-weight:500;">Energy (kWh)</span><span style="font-weight:600;">Laptop hours</span><span style="font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:#6E6B62;">&divide; 0.05 kWh/hr</span></div>
+        </div>
+      </div>
+
+      <!-- Uncertainty -->
+      <div>
+        <h2 style="font-family:Anton,sans-serif; font-size:clamp(28px,3vw,42px); margin:0 0 20px; text-transform:uppercase;">Sources of uncertainty</h2>
+        <div style="display:flex; flex-direction:column; gap:0; border-top:1px solid rgba(17,17,16,0.25);">
+          <p style="display:flex; gap:14px; margin:0; padding:12px 0; border-bottom:1px solid rgba(17,17,16,0.18); font-size:13.5px; line-height:1.55; font-weight:500; color:#3D3B36;"><span style="font-family:'IBM Plex Mono',monospace;">&mdash;</span><span>Token count is approximate &mdash; we use a GPT-4 compatible tokenizer (within ~5%), but Claude and GPT-5 use their own proprietary tokenizers.</span></p>
+          <p style="display:flex; gap:14px; margin:0; padding:12px 0; border-bottom:1px solid rgba(17,17,16,0.18); font-size:13.5px; line-height:1.55; font-weight:500; color:#3D3B36;"><span style="font-family:'IBM Plex Mono',monospace;">&mdash;</span><span>Energy per token varies significantly by model size, hardware generation, and batch utilization.</span></p>
+          <p style="display:flex; gap:14px; margin:0; padding:12px 0; border-bottom:1px solid rgba(17,17,16,0.18); font-size:13.5px; line-height:1.55; font-weight:500; color:#3D3B36;"><span style="font-family:'IBM Plex Mono',monospace;">&mdash;</span><span>PUE varies by data center &mdash; hyperscalers report ~1.1&ndash;1.2, industry average is ~1.5. We use 1.2.</span></p>
+          <p style="display:flex; gap:14px; margin:0; padding:12px 0; border-bottom:1px solid rgba(17,17,16,0.18); font-size:13.5px; line-height:1.55; font-weight:500; color:#3D3B36;"><span style="font-family:'IBM Plex Mono',monospace;">&mdash;</span><span>Grid carbon intensity varies dramatically by region (50&ndash;900+ g CO&#8322;/kWh). We use 340 g (US average).</span></p>
+          <p style="display:flex; gap:14px; margin:0; padding:12px 0; border-bottom:1px solid rgba(17,17,16,0.18); font-size:13.5px; line-height:1.55; font-weight:500; color:#3D3B36;"><span style="font-family:'IBM Plex Mono',monospace;">&mdash;</span><span>Water usage depends on cooling method (evaporative vs. air-cooled) and local climate conditions.</span></p>
+          <p style="display:flex; gap:14px; margin:0; padding:12px 0; border-bottom:1px solid rgba(17,17,16,0.18); font-size:13.5px; line-height:1.55; font-weight:500; color:#3D3B36;"><span style="font-family:'IBM Plex Mono',monospace;">&mdash;</span><span>We do not account for embodied carbon in hardware manufacturing or model training energy.</span></p>
+          <p style="display:flex; gap:14px; margin:0; padding:12px 0; border-bottom:1px solid rgba(17,17,16,0.18); font-size:13.5px; line-height:1.55; font-weight:500; color:#3D3B36;"><span style="font-family:'IBM Plex Mono',monospace;">&mdash;</span><span>GPT-5 energy estimates are based on early research (Epoch AI, U. of Rhode Island) and may be revised as more data becomes available.</span></p>
+          <p style="display:flex; gap:14px; margin:0; padding:12px 0; border-bottom:1px solid rgba(17,17,16,0.18); font-size:13.5px; line-height:1.55; font-weight:500; color:#3D3B36;"><span style="font-family:'IBM Plex Mono',monospace;">&mdash;</span><span>All estimates carry &plusmn;50% uncertainty.</span></p>
+        </div>
+      </div>
+
+      <!-- References -->
+      <div>
+        <h2 style="font-family:Anton,sans-serif; font-size:clamp(28px,3vw,42px); margin:0 0 20px; text-transform:uppercase;">References</h2>
+        <div style="display:flex; flex-direction:column; gap:12px;">
+          <a href="https://arxiv.org/abs/2311.16863" target="_blank" rel="noopener noreferrer" style="font-size:14px; font-weight:600; color:#111110; text-decoration:underline; text-underline-offset:3px;">Luccioni et al. &mdash; Power Hungry Processing (2023) &nearr;</a>
+          <a href="https://eta.lbl.gov/publications/2024-united-states-data-center" target="_blank" rel="noopener noreferrer" style="font-size:14px; font-weight:600; color:#111110; text-decoration:underline; text-underline-offset:3px;">2024 United States Data Center Energy Usage Report &nearr;</a>
+          <a href="https://www.eesi.org/papers/view/fact-sheet-the-energy-and-water-impacts-of-data-centers" target="_blank" rel="noopener noreferrer" style="font-size:14px; font-weight:600; color:#111110; text-decoration:underline; text-underline-offset:3px;">EESI &mdash; Data Center Water Usage (2024) &nearr;</a>
+          <a href="https://www.epa.gov/egrid" target="_blank" rel="noopener noreferrer" style="font-size:14px; font-weight:600; color:#111110; text-decoration:underline; text-underline-offset:3px;">US EPA &mdash; eGRID (Grid Carbon Intensity) &nearr;</a>
+          <a href="https://uptimeinstitute.com/resources/research-and-reports/uptime-institute-global-data-center-survey-results-2023" target="_blank" rel="noopener noreferrer" style="font-size:14px; font-weight:600; color:#111110; text-decoration:underline; text-underline-offset:3px;">Uptime Institute &mdash; Global PUE Survey &nearr;</a>
+          <a href="https://www.iea.org/energy-system/buildings/data-centres-and-data-transmission-networks" target="_blank" rel="noopener noreferrer" style="font-size:14px; font-weight:600; color:#111110; text-decoration:underline; text-underline-offset:3px;">IEA &mdash; Data Centres and Data Transmission Networks &nearr;</a>
+          <a href="https://epoch.ai/gradient-updates/how-much-energy-does-chatgpt-use" target="_blank" rel="noopener noreferrer" style="font-size:14px; font-weight:600; color:#111110; text-decoration:underline; text-underline-offset:3px;">Epoch AI &mdash; How much energy does ChatGPT use? (2025) &nearr;</a>
+          <a href="https://www.tomshardware.com/tech-industry/artificial-intelligence/chatgpt-5-power-consumption-could-be-as-much-as-eight-times-higher-than-gpt-4-research-institute-estimates-medium-sized-gpt-5-response-can-consume-up-to-40-watt-hours-of-electricity" target="_blank" rel="noopener noreferrer" style="font-size:14px; font-weight:600; color:#111110; text-decoration:underline; text-underline-offset:3px;">Tom's Hardware &mdash; GPT-5 Power Consumption Estimates (2025) &nearr;</a>
+        </div>
+      </div>
+    </section>
+  </sc-if>
+
+  <!-- ══ ABOUT ════════════════════════════════════════════════ -->
+  <sc-if value="{{ isAbout }}" hint-placeholder-val="{{ false }}">
+    <section data-screen-label="About" style="max-width:1080px; width:100%; margin:0 auto; padding:clamp(24px,4vw,56px) clamp(16px,3vw,40px) 64px; box-sizing:border-box; display:flex; flex-direction:column; gap:clamp(32px,4vw,52px); animation:fadeUp 0.5s ease both;">
+      <div>
+        <h1 style="font-family:Anton,sans-serif; font-size:clamp(48px,7vw,96px); margin:0; text-transform:uppercase; line-height:0.95;">About <span style="color:transparent; -webkit-text-stroke:2px #111110;">OpenH2O</span></h1>
+        <p style="font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.14em; text-transform:uppercase; margin:14px 0 0; color:#6E6B62;">Understanding your AI environmental footprint</p>
+      </div>
+
+      <div style="border-top:2px solid #111110; padding-top:24px;">
+        <p style="font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.18em; text-transform:uppercase; margin:0 0 16px;">(01) &mdash; Our mission</p>
+        <p style="font-size:clamp(17px,1.8vw,22px); line-height:1.55; margin:0; font-weight:500; max-width:760px;">OpenH2O is built by the <strong>Tech Awareness Association</strong> (TAA), a student-founded nonprofit dedicated to promoting technology literacy and digital responsibility.</p>
+        <p style="font-size:15px; line-height:1.6; margin:18px 0 0; color:#3D3B36; font-weight:500; max-width:720px;">As AI becomes an everyday tool, understanding its environmental cost is crucial. OpenH2O makes this invisible impact visible &mdash; empowering users to make more informed choices about their AI usage.</p>
+      </div>
+
+      <div style="border-top:2px solid #111110; padding-top:24px;">
+        <p style="font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.18em; text-transform:uppercase; margin:0 0 16px;">(02) &mdash; What OpenH2O does</p>
+        <div style="display:flex; flex-direction:column;">
+          <p style="display:flex; gap:14px; margin:0; padding:12px 0; border-bottom:1px solid rgba(17,17,16,0.18); font-size:14.5px; font-weight:500;"><span style="font-family:'IBM Plex Mono',monospace;">&mdash;</span><span>Estimates the energy, water, and carbon footprint of your Claude and ChatGPT conversations</span></p>
+          <p style="display:flex; gap:14px; margin:0; padding:12px 0; border-bottom:1px solid rgba(17,17,16,0.18); font-size:14.5px; font-weight:500;"><span style="font-family:'IBM Plex Mono',monospace;">&mdash;</span><span>Processes everything locally in your browser &mdash; your data never leaves your device</span></p>
+          <p style="display:flex; gap:14px; margin:0; padding:12px 0; border-bottom:1px solid rgba(17,17,16,0.18); font-size:14.5px; font-weight:500;"><span style="font-family:'IBM Plex Mono',monospace;">&mdash;</span><span>Provides real-world comparisons to contextualize your impact</span></p>
+          <p style="display:flex; gap:14px; margin:0; padding:12px 0; border-bottom:1px solid rgba(17,17,16,0.18); font-size:14.5px; font-weight:500;"><span style="font-family:'IBM Plex Mono',monospace;">&mdash;</span><span>Offers actionable tips for reducing your AI environmental footprint</span></p>
+          <p style="display:flex; gap:14px; margin:0; padding:12px 0; border-bottom:1px solid rgba(17,17,16,0.18); font-size:14.5px; font-weight:500;"><span style="font-family:'IBM Plex Mono',monospace;">&mdash;</span><span>Explains the methodology transparently with full source citations</span></p>
+        </div>
+      </div>
+
+      <div style="background:#111110; color:#F1EFE9; padding:clamp(24px,3vw,40px);">
+        <p style="font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.18em; text-transform:uppercase; margin:0 0 16px; opacity:0.6;">(03) &mdash; Privacy first</p>
+        <p style="font-size:15px; margin:0 0 16px; font-weight:500;">OpenH2O is a fully client-side application. This means:</p>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px,1fr)); gap:12px 28px; font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; line-height:1.8;">
+          <span>&#9632; No data sent to any server</span>
+          <span>&#9632; No cookies or tracking</span>
+          <span>&#9632; No accounts required</span>
+          <span>&#9632; Conversations stay on your device</span>
+          <span>&#9632; Closing the tab erases all data</span>
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px,1fr)); gap:20px;">
+        <a href="https://www.techawarenessassociation.org" target="_blank" rel="noopener noreferrer" style="border:2px solid #111110; padding:22px 24px; text-decoration:none; color:#111110; display:flex; align-items:center; justify-content:space-between; gap:12px;" style-hover="background:#111110; color:#F1EFE9;">
+          <span>
+            <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.16em; text-transform:uppercase; font-weight:600; display:block;">TAA Website</span>
+            <span style="font-size:12px; opacity:0.6; display:block; margin-top:4px;">techawarenessassociation.org</span>
+          </span>
+          <span style="font-family:Anton,sans-serif; font-size:24px;">&nearr;</span>
+        </a>
+        <a href="https://github.com/TechAwarenessMA/OpenH2O" target="_blank" rel="noopener noreferrer" style="border:2px solid #111110; padding:22px 24px; text-decoration:none; color:#111110; display:flex; align-items:center; justify-content:space-between; gap:12px;" style-hover="background:#111110; color:#F1EFE9;">
+          <span>
+            <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.16em; text-transform:uppercase; font-weight:600; display:block;">GitHub</span>
+            <span style="font-size:12px; opacity:0.6; display:block; margin-top:4px;">View source code</span>
+          </span>
+          <span style="font-family:Anton,sans-serif; font-size:24px;">&nearr;</span>
+        </a>
+      </div>
+
+      <div style="border:2px solid #111110; padding:28px; text-align:center;">
+        <p style="font-family:Anton,sans-serif; font-size:clamp(18px,2vw,26px); margin:0; text-transform:uppercase;">A free tool by Tech Awareness Association</p>
+        <p style="font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:0.18em; text-transform:uppercase; margin:10px 0 0; color:#6E6B62;">Student-founded nonprofit &middot; Shrewsbury, MA</p>
+      </div>
+    </section>
+  </sc-if>
+
+  <!-- ══ FOOTER ═══════════════════════════════════════════════ -->
+  <sc-if value="{{ notLanding }}" hint-placeholder-val="{{ false }}">
+    <footer style="margin-top:auto; border-top:2px solid #111110; padding:18px clamp(16px,3vw,40px); display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap;">
+      <p style="font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:0.14em; text-transform:uppercase; margin:0; color:#6E6B62;">OpenH2O &mdash; a free tool by <a href="https://www.techawarenessassociation.org" target="_blank" rel="noopener noreferrer" style="color:#111110; text-decoration:underline; text-underline-offset:2px;">Tech Awareness Association</a>, Shrewsbury MA</p>
+      <div style="display:flex; gap:20px;">
+        <button onClick="{{ goMethodology }}" style="font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:0.16em; text-transform:uppercase; background:transparent; border:none; color:#111110; cursor:pointer; padding:0;" style-hover="text-decoration:underline;">Methodology</button>
+        <button onClick="{{ goAbout }}" style="font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:0.16em; text-transform:uppercase; background:transparent; border:none; color:#111110; cursor:pointer; padding:0;" style-hover="text-decoration:underline;">About</button>
+      </div>
+    </footer>
+  </sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{
+  &quot;$preview&quot;: null,
+  &quot;texture&quot;: { &quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: false, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Visual&quot;, &quot;description&quot;: &quot;Subtle print-scanline texture overlay&quot; },
+  &quot;pageSize&quot;: { &quot;editor&quot;: &quot;int&quot;, &quot;default&quot;: 20, &quot;min&quot;: 10, &quot;max&quot;: 50, &quot;tsType&quot;: &quot;number&quot;, &quot;section&quot;: &quot;Breakdown&quot;, &quot;description&quot;: &quot;Rows per page in the conversation table&quot; },
+  &quot;defaultDaily&quot;: { &quot;editor&quot;: &quot;range&quot;, &quot;default&quot;: 5, &quot;min&quot;: 1, &quot;max&quot;: 50, &quot;step&quot;: 1, &quot;tsType&quot;: &quot;number&quot;, &quot;section&quot;: &quot;Projection&quot;, &quot;description&quot;: &quot;Initial convos/day for the annual projection slider&quot; }
+}">
+class Component extends DCLogic {
+  state = {
+    route: 'landing', L: null,
+    data: null, sources: [],
+    selectedFile: null, error: null, drag: false,
+    procMsgIdx: 0, procPct: 0, procError: null,
+    search: '', sortKey: 'totalTokens', sortDir: 'desc', page: 0, selectedRow: null,
+    daily: null, anim: 1,
+  };
+
+  static PROC_MSGS = [
+    'Reading your conversations...',
+    'Counting tokens...',
+    'Calculating energy usage...',
+    'Estimating water consumption...',
+    'Computing carbon emissions...',
+    'Generating comparisons...',
+    'Almost there...',
+  ];
+
+  static DID_YOU_KNOW = [
+    'A single large language model training run can emit as much carbon as five cars over their entire lifetimes.',
+    'Data centers consume about 1-2% of global electricity, and AI workloads are among the most energy-intensive tasks.',
+    'The water used to cool data centers could supply millions of households \u2014 and demand is growing 20-30% per year.',
+    'AI inference (running queries) now consumes more total energy than training, because it runs billions of times.',
+    'A single ChatGPT query uses roughly 10x the energy of a Google search.',
+    'By 2030, data centers are projected to consume 3-4% of global electricity, driven largely by AI.',
+  ];
+
+  constructor(props) {
+    super(props);
+    this.fileRef = React.createRef();
+  }
+
+  componentDidMount() {
+    this._logicPromise = import('./openh2o-logic.js');
+    this._logicPromise.then(m => this.setState({ L: m })).catch(() => {});
+    try {
+      const raw = sessionStorage.getItem('openh2o_data');
+      if (raw) {
+        const c = JSON.parse(raw);
+        if (c && c.totals) this.setState({ data: c, sources: c.sources || [] });
+      }
+    } catch { /* ignore */ }
+    this._onHash = () => {
+      const r = (location.hash.replace(/^#\/?/, '') || 'landing');
+      const valid = ['landing', 'processing', 'dashboard', 'breakdown', 'insights', 'methodology', 'about'];
+      const route = valid.includes(r) ? r : 'landing';
+      this.setState({ route, selectedRow: null }, () => {
+        if (route === 'dashboard') this.startCountUp();
+      });
+      window.scrollTo(0, 0);
+    };
+    window.addEventListener('hashchange', this._onHash);
+    this._onHash();
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener('hashchange', this._onHash);
+    clearInterval(this._procTimer);
+    cancelAnimationFrame(this._raf);
+  }
+
+  go(route) {
+    const target = route === 'landing' ? '#/' : '#/' + route;
+    if (location.hash === target) return;
+    location.hash = target;
+  }
+
+  startCountUp() {
+    cancelAnimationFrame(this._raf);
+    this.setState({ anim: 0 });
+    const t0 = performance.now();
+    const dur = 1400;
+    const step = (ts) => {
+      const p = Math.min((ts - t0) / dur, 1);
+      this.setState({ anim: 1 - Math.pow(1 - p, 3) });
+      if (p < 1) this._raf = requestAnimationFrame(step);
+    };
+    this._raf = requestAnimationFrame(step);
+  }
+
+  handleFile(file) {
+    this.setState({ error: null });
+    if (!file) return;
+    if (!file.name.endsWith('.json') && !file.name.endsWith('.zip')) {
+      this.setState({ error: 'Please upload a .json or .zip file' });
+      return;
+    }
+    if (file.size > 500 * 1024 * 1024) {
+      this.setState({ error: 'File is too large (max 500 MB)' });
+      return;
+    }
+    this.setState({ selectedFile: file });
+  }
+
+  saveCache(data) {
+    try {
+      const toSave = {
+        totals: data.totals,
+        conversations: data.conversations,
+        monthlyData: data.monthlyData,
+        dateRange: data.dateRange,
+        sources: data.sources,
+        isSample: data.isSample || false,
+      };
+      sessionStorage.setItem('openh2o_data', JSON.stringify(toSave));
+    } catch { /* quota exceeded */ }
+  }
+
+  async analyze() {
+    const file = this.state.selectedFile;
+    if (!file) return;
+    this.setState({ procPct: 0, procMsgIdx: 0, procError: null });
+    this.go('processing');
+    clearInterval(this._procTimer);
+    this._procTimer = setInterval(() => this.setState(s => ({
+      procMsgIdx: (s.procMsgIdx + 1) % Component.PROC_MSGS.length,
+      procPct: Math.min(s.procPct + 12, 90),
+    })), 600);
+    try {
+      const L = await this._logicPromise;
+      await L.initTokenizer();
+      let json;
+      if (file.name.endsWith('.zip')) {
+        const JSZip = (await import('https://cdn.jsdelivr.net/npm/jszip@3.10.1/+esm')).default;
+        const zip = await JSZip.loadAsync(file);
+        const cf = zip.file('conversations.json');
+        if (!cf) throw new Error('No conversations.json found in the ZIP archive.');
+        json = JSON.parse(await cf.async('string'));
+      } else {
+        json = JSON.parse(await file.text());
+      }
+      const result = L.processConversations(json);
+      const format = L.detectFormat(json);
+      const prev = this.state.data;
+      const prevSources = this.state.sources || [];
+      let data;
+      if (prev && prevSources.length > 0 && !prevSources.includes(format)) {
+        const merged = L.mergeResults(prev, result);
+        data = { ...merged, sources: [...prevSources, format], isSample: false };
+      } else {
+        data = {
+          totals: result.totals,
+          conversations: result.conversations,
+          monthlyData: result.monthlyData,
+          dateRange: result.dateRange,
+          sources: prevSources.includes(format) ? prevSources : [...prevSources.filter(s => s !== format), format],
+          isSample: false,
+        };
+      }
+      clearInterval(this._procTimer);
+      this.setState({ data, sources: data.sources, procPct: 100, selectedFile: null });
+      this.saveCache(data);
+      setTimeout(() => this.go('dashboard'), 500);
+    } catch (err) {
+      clearInterval(this._procTimer);
+      this.setState({ procError: err.message || String(err) });
+    }
+  }
+
+  async loadSample() {
+    const L = await this._logicPromise;
+    const result = L.generateSampleResult();
+    const data = { ...result };
+    this.setState({ data, sources: data.sources });
+    this.saveCache(data);
+    this.go('dashboard');
+    this.startCountUp();
+  }
+
+  clearData() {
+    try { sessionStorage.removeItem('openh2o_data'); } catch { /* ignore */ }
+    this.setState({ data: null, sources: [], selectedFile: null, selectedRow: null, search: '', page: 0 });
+    this.go('landing');
+  }
+
+  toggleSort(key) {
+    this.setState(s => ({
+      sortKey: key,
+      sortDir: s.sortKey === key ? (s.sortDir === 'desc' ? 'asc' : 'desc') : 'desc',
+      page: 0,
+    }));
+  }
+
+  renderVals() {
+    const s = this.state;
+    const L = s.L;
+    const d = s.data;
+    const P = this.props || {};
+    const hasData = !!d;
+    const route = s.route;
+    const ink = '#111110', paper = '#F1EFE9';
+
+    const navDefs = [
+      ['UPLOAD', 'landing'], ['IMPACT', 'dashboard'], ['BREAKDOWN', 'breakdown'],
+      ['INSIGHTS', 'insights'], ['METHODOLOGY', 'methodology'], ['ABOUT', 'about'],
+    ];
+    const navItems = navDefs.map(([label, r]) => ({
+      label,
+      go: () => this.go(r),
+      bg: route === r ? ink : 'transparent',
+      fg: route === r ? paper : ink,
+    }));
+
+    const v = {
+      texture: !!P.texture,
+      navItems,
+      isLanding: route === 'landing',
+      isProcessing: route === 'processing',
+      isMethodology: route === 'methodology',
+      isAbout: route === 'about',
+      showDashboard: route === 'dashboard' && hasData,
+      showBreakdown: route === 'breakdown' && hasData,
+      showInsights: route === 'insights' && hasData,
+      showEmpty: (route === 'dashboard' || route === 'breakdown' || route === 'insights') && !hasData,
+      notLanding: route !== 'landing',
+      hasData,
+      goHome: () => this.go('landing'),
+      goDashboard: () => this.go('dashboard'),
+      goInsights: () => this.go('insights'),
+      goMethodology: () => this.go('methodology'),
+      goAbout: () => this.go('about'),
+      resetData: () => this.clearData(),
+      // upload
+      fileRef: this.fileRef,
+      openPicker: () => { if (this.fileRef.current) this.fileRef.current.click(); },
+      onFileChange: (e) => this.handleFile(e.target.files && e.target.files[0]),
+      onDrop: (e) => { e.preventDefault(); this.setState({ drag: false }); this.handleFile(e.dataTransfer.files[0]); },
+      onDragOver: (e) => { e.preventDefault(); if (!s.drag) this.setState({ drag: true }); },
+      onDragLeave: () => this.setState({ drag: false }),
+      clearFile: (e) => {
+        e.stopPropagation();
+        this.setState({ selectedFile: null, error: null });
+        if (this.fileRef.current) this.fileRef.current.value = '';
+      },
+      analyze: () => this.analyze(),
+      loadSample: () => this.loadSample(),
+      hasFile: !!s.selectedFile,
+      noFile: !s.selectedFile,
+      fileName: s.selectedFile ? s.selectedFile.name : '',
+      fileSize: s.selectedFile ? (s.selectedFile.size / 1024 / 1024).toFixed(2) + ' MB' : '',
+      hasError: !!s.error,
+      errorMsg: s.error || '',
+      dropBg: s.drag ? ink : 'transparent',
+      dropFg: s.drag ? paper : ink,
+      dropText: s.drag ? 'RELEASE TO UPLOAD' : 'DROP CONVERSATIONS.JSON HERE',
+      sourcesLabel: (s.sources || []).map(x => x === 'claude' ? 'CLAUDE' : 'CHATGPT').join(' + '),
+      // processing
+      procMsg: Component.PROC_MSGS[s.procMsgIdx],
+      procPct: s.procPct,
+      procHasError: !!s.procError,
+      procErrorMsg: s.procError || '',
+      tryAgain: () => { this.setState({ procError: null }); this.go('landing'); },
+      // search (safe defaults so inputs are always controlled)
+      search: s.search,
+      onSearch: (e) => this.setState({ search: e.target.value, page: 0 }),
+      clearSearch: () => this.setState({ search: '', page: 0 }),
+      hasSearch: s.search.length > 0,
+    };
+
+    if (!d || !L) return v;
+
+    /* ── data-derived values ── */
+    const t = d.totals;
+    const fmt = L.formatNumber;
+    const a = s.anim;
+    const comp = L.getComparisons(t);
+    const B = comp.badges;
+    const fc = (n, dec = 1) => {
+      if (n === 0) return '0';
+      if (n < 0.1) return n < 0.01 ? n.toFixed(4) : n.toFixed(2);
+      return fmt(n, dec);
+    };
+    const eq = (b) => b.description.replace('Equivalent to ', '');
+
+    const nConvos = t.totalConversations;
+    const epc = nConvos > 0 ? t.energyKwh / nConvos : 0;
+    const wpc = nConvos > 0 ? t.waterLiters / nConvos : 0;
+    const cpc = nConvos > 0 ? t.carbonGrams / nConvos : 0;
+
+    v.isSample = !!d.isSample;
+    v.dateLabel = (d.dateRange && d.dateRange.earliest && d.dateRange.latest)
+      ? `${L.formatDate(d.dateRange.earliest)} \u2014 ${L.formatDate(d.dateRange.latest)}`.toUpperCase()
+      : '';
+    v.convoCount = fmt(nConvos);
+    v.msgCount = fmt(t.totalMessages || 0);
+    v.avgTokens = fmt(nConvos > 0 ? Math.round(t.totalTokens / nConvos) : 0);
+    v.modelsLabel = (d.sources || s.sources || []).map(x => x === 'claude' ? 'CLAUDE SONNET 4.6' : 'GPT-5').join(' + ');
+
+    v.totCarbon = fmt(t.carbonGrams * a, 2);
+    v.totWater = fmt(t.waterLiters * a, 2);
+    v.totEnergy = fmt(t.energyKwh * a, 4);
+    v.energyEq1 = eq(B[0]); v.energyEq2 = eq(B[1]);
+    v.waterEq1 = eq(B[2]); v.waterEq2 = eq(B[3]);
+    v.carbonEq1 = eq(B[4]); v.carbonEq2 = eq(B[5]);
+
+    v.fact1 = `Your AI usage = leaving a lightbulb on for ${fc(B[0].count, 1)} hours.`;
+    v.fact2 = `That's the same water as ${fc(B[2].count, 1)} water bottles.`;
+    v.fact3 = `Carbon equivalent of driving ${fc(B[4].count, 2)} miles.`;
+    v.fact4 = `Same CO\u2082 as charging your phone ${fc(B[5].count, 1)} times.`;
+
+    v.perEnergy = fmt(epc, 5);
+    v.perWater = fmt(wpc, 3);
+    v.perCarbon = fmt(cpc, 3);
+
+    v.badges = B.map(b => ({
+      count: fmt(b.count, b.count < 1 ? 2 : b.count < 10 ? 1 : 0),
+      title: b.title.toUpperCase(),
+    }));
+
+    const monthly = d.monthlyData || [];
+    v.hasChart = monthly.length > 1;
+    const maxTok = Math.max(1, ...monthly.map(m => m.tokens));
+    v.monthlyBars = monthly.map(m => ({
+      label: L.formatMonth(m.month).toUpperCase(),
+      pct: Math.max(2, (m.tokens / maxTok) * 100),
+      title: `${fmt(m.tokens)} tokens \u00B7 ${m.conversations} conversations`,
+    }));
+
+    const inT = t.inputTokens || 0, outT = t.outputTokens || 0;
+    const totT = inT + outT;
+    const inPct = totT > 0 ? Math.round((inT / totT) * 100) : 0;
+    v.inTok = fmt(inT); v.outTok = fmt(outT);
+    v.inPct = inPct; v.outPct = 100 - inPct;
+    const srcs = d.sources || s.sources || [];
+    const isMixed = srcs.length > 1;
+    v.notMixed = !isMixed;
+    v.mixedNote = isMixed ? ' Energy ratios vary between Claude and GPT \u2014 see Methodology for details.' : '';
+    if (!isMixed) {
+      const coeff = srcs[0] === 'chatgpt' ? L.GPT_COEFFICIENTS : L.COEFFICIENTS;
+      const inE = inT * coeff.energy_per_input_token_wh;
+      const outE = outT * coeff.energy_per_output_token_wh;
+      const totE = inE + outE;
+      const inEP = totE > 0 ? Math.round((inE / totE) * 100) : 0;
+      v.inEnergyPct = inEP; v.outEnergyPct = 100 - inEP;
+      v.inEnergyNote = `${inEP}% of energy`;
+      v.outEnergyNote = `${100 - inEP}% of energy`;
+    } else {
+      v.inEnergyPct = 0; v.outEnergyPct = 0;
+      v.inEnergyNote = 'energy varies by model';
+      v.outEnergyNote = 'energy varies by model';
+    }
+
+    const daily = s.daily != null ? s.daily : (P.defaultDaily != null ? P.defaultDaily : 5);
+    const annual = daily * 365;
+    v.daily = daily;
+    v.onDaily = (e) => this.setState({ daily: Number(e.target.value) });
+    v.annualLabel = annual.toLocaleString();
+    v.projEnergy = fmt(epc * annual, 3);
+    v.projWater = fmt(wpc * annual, 2);
+    v.projCarbon = fmt(cpc * annual, 2);
+
+    v.exportCsv = () => L.exportConversationsCSV(d.conversations);
+
+    /* ── breakdown ── */
+    const pageSize = P.pageSize != null ? P.pageSize : 20;
+    let filtered = d.conversations;
+    if (s.search) {
+      const q = s.search.toLowerCase();
+      filtered = filtered.filter(c => (c.title || '').toLowerCase().includes(q));
+    }
+    filtered = [...filtered].sort((x, y) => {
+      const xv = x[s.sortKey] || 0, yv = y[s.sortKey] || 0;
+      return s.sortDir === 'desc' ? yv - xv : xv - yv;
+    });
+    const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+    const page = Math.min(s.page, totalPages - 1);
+    const top5 = new Set([...d.conversations].sort((x, y) => y.totalTokens - x.totalTokens).slice(0, 5));
+
+    v.filteredCount = fmt(filtered.length);
+    v.pageRows = filtered.slice(page * pageSize, (page + 1) * pageSize).map(c => {
+      const key = (c.title || '') + '|' + (c.createdAt || '');
+      const sel = s.selectedRow === key;
+      return {
+        title: c.title || 'Untitled',
+        marker: top5.has(c) ? '\u25A0 ' : '',
+        srcTag: c.source === 'chatgpt' ? '[GPT]' : '[C]',
+        dateLabel: L.formatDate(c.createdAt),
+        tokens: fmt(c.totalTokens),
+        energy: fmt(c.energyKwh, 6),
+        water: fmt(c.waterLiters, 4),
+        carbon: fmt(c.carbonGrams, 4),
+        msgs: String(c.messageCount),
+        isSelected: sel,
+        bg: sel ? '#E7E4DC' : 'transparent',
+        onClick: () => this.setState({ selectedRow: sel ? null : key }),
+        inTok: fmt(c.inputTokens),
+        outTok: fmt(c.outputTokens),
+        share: t.totalTokens > 0 ? ((c.totalTokens / t.totalTokens) * 100).toFixed(1) : '0',
+      };
+    });
+    v.sortCols = [
+      ['TOKENS', 'totalTokens'], ['ENERGY', 'energyKwh'], ['WATER', 'waterLiters'],
+      ['CARBON', 'carbonGrams'], ['MSGS', 'messageCount'],
+    ].map(([label, key]) => ({
+      label,
+      arrow: s.sortKey === key ? (s.sortDir === 'desc' ? '\u25BC' : '\u25B2') : '',
+      onSort: () => this.toggleSort(key),
+    }));
+    v.hasPages = totalPages > 1;
+    v.pageLabel = `PAGE ${page + 1} OF ${totalPages}`;
+    v.prevDisabled = page === 0;
+    v.nextDisabled = page >= totalPages - 1;
+    v.prevPage = () => this.setState(st => ({ page: Math.max(0, st.page - 1), selectedRow: null }));
+    v.nextPage = () => this.setState(st => ({ page: Math.min(totalPages - 1, st.page + 1), selectedRow: null }));
+
+    /* ── insights ── */
+    const avgMessages = nConvos > 0 ? (t.totalMessages / nConvos).toFixed(1) : '0';
+    const ioRatio = (t.inputTokens > 0 && t.outputTokens > 0) ? (t.outputTokens / t.inputTokens).toFixed(1) : null;
+    const peakMonth = monthly.length > 0 ? monthly.reduce((best, m) => m.tokens > best.tokens ? m : best, monthly[0]) : null;
+    const topConvo = d.conversations.length > 0
+      ? [...d.conversations].sort((x, y) => y.totalTokens - x.totalTokens)[0]
+      : null;
+
+    v.statCards = [
+      { label: 'AVG MESSAGES / CONVO', value: avgMessages, sub: 'messages per conversation' },
+      { label: 'OUTPUT MULTIPLIER', value: ioRatio ? ioRatio + '\u00D7' : '\u2014', sub: ioRatio ? `For every token you type, AI generates ${ioRatio}` : 'Not enough data' },
+      { label: 'PEAK MONTH', value: peakMonth ? L.formatMonth(peakMonth.month).toUpperCase() : '\u2014', sub: peakMonth ? `${fmt(peakMonth.tokens)} tokens` : '' },
+      { label: 'HEAVIEST CONVERSATION', value: topConvo ? fmt(topConvo.totalTokens) : '\u2014', sub: topConvo ? (topConvo.title || 'Untitled') : '' },
+    ];
+
+    v.hasTrends = monthly.length >= 2;
+    if (v.hasTrends) {
+      const last = monthly[monthly.length - 1];
+      const prev = monthly[monthly.length - 2];
+      const tokenPct = prev.tokens > 0 ? Math.round(((last.tokens - prev.tokens) / prev.tokens) * 100) : 0;
+      const convoPct = prev.conversations > 0 ? Math.round(((last.conversations - prev.conversations) / prev.conversations) * 100) : 0;
+      const lastAvg = last.conversations > 0 ? last.tokens / last.conversations : 0;
+      const prevAvg = prev.conversations > 0 ? prev.tokens / prev.conversations : 0;
+      const effPct = prevAvg > 0 ? Math.round(((lastAvg - prevAvg) / prevAvg) * 100) : 0;
+      const mk = (label, pct, up0, down0, same) => ({
+        label,
+        arrow: pct > 0 ? '\u25B2' : pct < 0 ? '\u25BC' : '\u2014',
+        pctLabel: (pct > 0 ? '+' : '') + pct + '%',
+        description: pct > 0 ? up0 : pct < 0 ? down0 : same,
+      });
+      v.trends = [
+        mk('TOKEN USAGE', tokenPct,
+          `You used ${Math.abs(tokenPct)}% more tokens in ${L.formatMonth(last.month)} vs ${L.formatMonth(prev.month)}.`,
+          `You used ${Math.abs(tokenPct)}% fewer tokens in ${L.formatMonth(last.month)} vs ${L.formatMonth(prev.month)}.`,
+          'Token usage stayed the same.'),
+        mk('CONVERSATION COUNT', convoPct,
+          `${Math.abs(convoPct)}% more conversations this month.`,
+          `${Math.abs(convoPct)}% fewer conversations this month.`,
+          'Same number of conversations.'),
+        mk('AVG TOKENS / CONVO', effPct,
+          `Conversations are getting ${Math.abs(effPct)}% longer on average.`,
+          `Conversations are ${Math.abs(effPct)}% more concise on average.`,
+          'Conversation length is stable.'),
+      ];
+    } else {
+      v.trends = [];
+    }
+
+    const tips = L.getTips(t, d.conversations);
+    const sortedTips = [...tips].sort((x, y) => {
+      if (x.category === 'pattern' && y.category !== 'pattern') return -1;
+      if (x.category !== 'pattern' && y.category === 'pattern') return 1;
+      return 0;
+    });
+    v.tips = sortedTips.map((tip, i) => ({
+      idx: 'T' + String(i + 1).padStart(2, '0'),
+      title: tip.title,
+      description: tip.description,
+      tag: '[' + tip.category.toUpperCase() + ']',
+    }));
+
+    v.didYouKnow = Component.DID_YOU_KNOW[nConvos % Component.DID_YOU_KNOW.length];
+
+    return v;
+  }
+}
+</script>
+</body>
 </html>
