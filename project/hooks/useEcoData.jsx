@@ -12,6 +12,7 @@ const EMPTY_STATE = {
   conversations: [],
   monthlyData: [],
   dateRange: { earliest: null, latest: null },
+  isSample: false,
   error: null,
 };
 
@@ -37,6 +38,7 @@ function saveCachedState(state) {
       conversations: state.conversations,
       monthlyData: state.monthlyData,
       dateRange: state.dateRange,
+      isSample: state.isSample,
     };
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
   } catch { /* quota exceeded — fail silently */ }
@@ -54,6 +56,7 @@ export function EcoDataProvider({ children }) {
         conversations: cached.conversations || [],
         monthlyData: cached.monthlyData || [],
         dateRange: cached.dateRange || { earliest: null, latest: null },
+        isSample: cached.isSample || false,
       };
     }
     return EMPTY_STATE;
@@ -108,6 +111,7 @@ export function EcoDataProvider({ children }) {
             conversations: merged.conversations,
             monthlyData: merged.monthlyData,
             dateRange: merged.dateRange,
+            isSample: false,
             error: null,
           };
         }
@@ -121,8 +125,33 @@ export function EcoDataProvider({ children }) {
           conversations: result.conversations,
           monthlyData: result.monthlyData,
           dateRange: result.dateRange,
+          isSample: false,
           error: null,
         };
+      });
+    } catch (err) {
+      setState(s => ({ ...s, status: 'error', error: err.message }));
+    }
+  }, []);
+
+  const loadSample = useCallback(async () => {
+    setState(s => ({ ...s, status: 'processing', error: null }));
+    try {
+      const [{ processConversations }, { generateSampleRaw }] = await Promise.all([
+        import('../utils/calculator.js'),
+        import('../data/sampleData.js'),
+      ]);
+      const result = processConversations(generateSampleRaw());
+      setState({
+        status: 'done',
+        rawData: {},
+        sources: ['claude'],
+        totals: result.totals,
+        conversations: result.conversations,
+        monthlyData: result.monthlyData,
+        dateRange: result.dateRange,
+        isSample: true,
+        error: null,
       });
     } catch (err) {
       setState(s => ({ ...s, status: 'error', error: err.message }));
@@ -139,6 +168,7 @@ export function EcoDataProvider({ children }) {
     hasData: state.status === 'done',
     isProcessing: state.status === 'processing',
     uploadFile,
+    loadSample,
     clearData,
   };
 
